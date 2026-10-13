@@ -272,6 +272,18 @@ C     Set period independent Coefficients
       Vw2 = 400.0
       nPer = 40
 
+C     Check that VS30 is within the range of the model (200 <= VS30 <= 3000 m/s)
+      if (vs .lt. Vl .or. vs .gt. 3000.0) then
+         write (*,*)
+         write (*,*) 'Stewart et al. (2020) Site Amplification'
+         write (*,*) ' model is not defined for a VS30 of: '
+         write (*,'(a10,f10.2)') ' VS30   = ', vs
+         write (*,*) 'The model is defined for 200 <= VS30 <= 3000 m/s.'
+         write (*,*) 'Please check the input file.'
+         write (*,*)
+         stop 99
+      endif
+
 C First check for the PGV case
       if (specT .eq. -1.0) then
          cT = c(1)
