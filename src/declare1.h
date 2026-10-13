@@ -37,7 +37,8 @@ c    Declarations for Main file
      1        iWidth, iArea, hwflagout(MAX_FLT), sourceType(MAX_FLT),
      2        attenType(MAX_FLT), iParam, nParamVar(MAX_FLT,MAX_WIDTH),
      3        iMagBin, iDistBin, iEpsBin, nMagBins, nDistBins, nEpsBins,
-     4        nPts, iCoor, nXcostBins, nAttenType, vs30_class, foreARc
+     4        nPts, iCoor, nXcostBins, nAttenType, vs30_class, foreARc,
+     5        distmaxType(MAX_FLT)
       integer fIndex(3,MAX_FLT), iFltWidth, fsys(MAX_FLT), sigflag,
      1        fltDirect(MAX_FLT), synchron(MAX_FLT), synjcalc(MAX_FLT),
      2        nSyn_Case(MAX_FLT), synHWFlag(MAX_FLT,MAX_SYN),
@@ -53,7 +54,7 @@ c    Declarations for Main file
      4     fltGrid_RJB(MAXFLT_DD,MAXFLT_AS), dipavgd, pdfsum(MAX_FLT)
       real Rx, Ry, Ry0, lgInten0, pLocY(MAXFLT_AS),
      1     sigmaTotal, sigma1, sigma2, phi, tau, distDensity2(MAX_GRID),
-     2     segModelWt1(MAX_FLT,100), distmax, grid_dx, grid_dy, faultArea,
+     2     segModelWt1(MAX_FLT,100), distmax(2), grid_dx, grid_dy, faultArea,
      3     faultLen, pLocX, hypoDepth, ZTOR, t1, aveWidth, probSyn,
      4     sigma_mu, rate1, PC_Coef(7,MAX_INTEN)
       real dirMed, dirSigma, fs, pHypoX, pHypoZ, temp, sigma0, AR,

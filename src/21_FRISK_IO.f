@@ -16,9 +16,9 @@
      3        sCalc(MAX_PROB,4,MAX_ATTEN), nAttenType, j1, k, jj,
      4        nAtten(MAX_PROB,4), soilAmpFlag, charcount
       integer coefcountrrup, coefcountrjb, PCflag(MAX_PROB),
-     1        iMixture(MAX_PROB,4,MAX_ATTEN)
+     1        iMixture(MAX_PROB,4,MAX_ATTEN), ios
       integer*4 starttime(3)
-      real testInten(MAX_PROB,MAX_INTEN), distmax, minlat, maxlat,
+      real testInten(MAX_PROB,MAX_INTEN), distmax(2), minlat, maxlat,
      1     minlong, maxlong, lgTestInten(MAX_PROB,MAX_INTEN),
      2     distBins(MAX_DIST), epsBins(MAX_EPS), XcostBins(MAX_Xcost),
      3     sigTrunc(MAX_PROB), sigfix(MAX_PROB,4,MAX_ATTEN),
@@ -27,6 +27,7 @@
      1     sigvaradd(MAX_PROB,4,MAX_ATTEN), cfcoefrrup(MAX_Atten,11),
      2     cfcoefrjb(MAX_Atten,11), checkattenwt, version
       character*80 filein, title, file1, filelog
+      character*200 distLine
 
 c     Set Data file units
       nwr = 11
@@ -95,7 +96,14 @@ c     Read fault file name and version format
 
 c     Read min max long and lat for grid sources
       read (13,*,err=2001) minlat, maxlat, minlong, maxlong
-      read (13,*,err=2002) distmax
+c     Read max distances for sources with max distance type 1 and 2 (set in the
+c     45.4 fault file). A single value is used for both types.
+      read (13,'( a)',err=2002) distLine
+      read (distLine,*,iostat=ios) distmax(1), distmax(2)
+      if ( ios .ne. 0 ) then
+        read (distLine,*,err=2002) distmax(1)
+        distmax(2) = distmax(1)
+      endif
 
 c     Input options
       read(13,'( a80)') title
@@ -105,6 +113,8 @@ c     Input options
       call S21_CheckDim ( nProb, MAX_Prob, 'MAX_ATTEN ' )
       write (18,*) '45.4 Haz45.4 log file'
       write (18,'( a80)') title
+      write (18,'( 2x,''Max distance (km) for max distance types 1 and 2: '',2f10.1)')
+     1      distmax(1), distmax(2)
       write (18,*)
       write (18,*) 'Summary of Attenuation relationship used in the analysis:'
       write (18,*)

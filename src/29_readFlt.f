@@ -15,11 +15,12 @@
      5     segModelFlag, nSegModel0, segModelWt1, syn_dip,
      6     syn_zTOR, syn_RupWidth, syn_RX, syn_Ry0, magS7, rateS7,
      7     DistS7, DipS7, mechS7, ncountS7, version, VarXstepFlag,
-     8     VarYstepFlag)
+     8     VarYstepFlag, distmaxType)
 
       implicit none
       include 'pfrisk.h'
 
+      integer distmaxType(MAX_FLT), i
       integer synHWFlag(MAX_FLT,MAX_SYN), nsyn_Case(MAX_FLT), nFlt,
      1        synjcalc(MAX_FLT), fltDirect(MAX_FLT), synchron(MAX_FLT),
      2        fIndex(3,MAX_FLT), sourceType(MAX_FLT),
@@ -59,6 +60,12 @@
      1     depthParam(MAX_FLT,5), mMagoutWt(MAX_FLT,MAX_WIDTH,MAXPARAM),
      2     sigArea(MAX_FLT), RateType(MAX_FLT,MAXPARAM,MAX_WIDTH)
       character*80 fName(MAX_FLT)
+
+c     Max distance type for each source (1 or 2). Only the 45.4 format reads it;
+c     sources in older fault files all use max distance type 1.
+      do i=1,MAX_FLT
+        distmaxType(i) = 1
+      enddo
 
       if ( version .eq. 45.1 ) then
         call S29_Rd_Fault_Data_45_1 ( nFlt, fName, minMag, magStep, hxStep,
@@ -131,7 +138,8 @@
      4     faultFlag, nDownDip, nFtype, ftype_wt,
      5     segModelFlag, nSegModel0, segModelWt1, syn_dip,
      6     syn_zTOR, syn_RupWidth, syn_RX, syn_Ry0, magS7, rateS7,
-     7     DistS7, DipS7, mechS7, ncountS7, VarXstepFlag, VarYstepFlag)
+     7     DistS7, DipS7, mechS7, ncountS7, VarXstepFlag, VarYstepFlag,
+     8     distmaxType)
       else
         write (*,'( 2x,''Incompatible fault file, use Haz45.4, Haz45.3, Haz45.2, or Haz45.1'')')
         stop 99
@@ -158,11 +166,13 @@ c  --------------------------------------------------------------------
      4     faultFlag, nDownDip, nFtype, ftype_wt,
      5     segModelFlag, nSegModel0, segModelWt1, syn_dip,
      6     syn_zTOR, syn_RupWidth, syn_RX, syn_Ry0, magS7, rateS7,
-     7     DistS7, DipS7, mechS7, ncountS7, VarXstepFlag, VarYstepFlag)
+     7     DistS7, DipS7, mechS7, ncountS7, VarXstepFlag, VarYstepFlag,
+     8     distmaxType)
 
       implicit none
       include 'pfrisk.h'
 
+      integer distmaxType(MAX_FLT)
       integer synHWFlag(MAX_FLT,MAX_SYN), nsyn_Case(MAX_FLT),
      1        synjcalc(MAX_FLT), fltDirect(MAX_FLT), synchron(MAX_FLT),
      2        fIndex(3,MAX_FLT), nWidth(MAX_FLT), sourceType(MAX_FLT),
@@ -277,9 +287,15 @@ c       Read name of this segment
         read(10,'( a80)',err=3009) fName(iFlt)
         write (*,'( i5,2x,a80)') iFlt, fName(iFlt)
 
-c       Read type of source (planar, areal, grid1, grid2, irregular)
-        read(10,*,err=3010) sourceType(iFlt),attenType(iFlt),sampleStep(iFlt),
-     1                 fltDirect(iFlt), synchron(iFlT)
+c       Read type of source (planar, areal, grid1, grid2, irregular) and
+c       max distance type (1 or 2, selects the max distance given in the run file)
+        read(10,*,err=3010) sourceType(iFlt),distmaxType(iFlt),attenType(iFlt),
+     1                 sampleStep(iFlt), fltDirect(iFlt), synchron(iFlT)
+        if (distmaxType(iFlt) .ne. 1 .and. distmaxType(iFlt) .ne. 2) then
+          write (*,'( 2x,''Flt file error: max distance type must be 1 or 2'')')
+          write (*,'( 2x,''From fault segment: '',a80)') fName(iFlt)
+          stop 99
+        endif
 
 c       Now read in the synchronous rupture case parameters if needed.
         if (synchron(iFlt) .gt. 0) then

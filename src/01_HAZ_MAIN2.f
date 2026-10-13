@@ -68,7 +68,8 @@ c     read fault File
      4     faultFlag, nDD, nFtype, ftype_wt,
      5     segModelFlag, nSegModel, segModelWt1, syn_dip,
      6     syn_zTOR, syn_RupWidth, syn_RX, syn_Ry0, magS7, rateS7,
-     7     DistS7, DipS7, mechS7, ncountS7, version, VarXstepFlag, VarYstepFlag)
+     7     DistS7, DipS7, mechS7, ncountS7, version, VarXstepFlag, VarYstepFlag,
+     8     distmaxType)
 
 c     Loop Over Number of Sites
       read (13,*,err=2100) nSite
@@ -310,7 +311,9 @@ c            Set minimum distances for output files.
      1                         SourceDist, MinRrup_temp, MinRjb_temp, MinSeismo_temp)
 
 c             Check if the distance is greater than Max dist for hazard
-              if ( distRup .gt. distmax .and. distJB .gt. distmax) goto 600
+c             (max distance for this source's max distance type)
+              if ( distRup .gt. distmax(distmaxType(iFlt)) .and.
+     1             distJB .gt. distmax(distmaxType(iFlt)) ) goto 600
 
 c             Set the distance bin for de-aggregation (using rupture distance)
               call S23_SetBin ( nDistBins, distBins, distRup,iDistBin)
