@@ -2344,10 +2344,20 @@ C     Model Number = 201335
          maxaper = 2.0
       endif
 
-c *** PEER NGAEast Models *****
+c *** PEER NGAEast Median Models *****
 c     Goulet et al., 2018 (PEER Report 2018/08) **
 c     Model Numbers 7001 - 7017 (Median, VS30 = 3000 m/s)
       if (jcalc .ge. 7001 .and. jcalc .le. 7017) then
+        anper = 25
+        minaper = 0.01
+        maxaper = 10.0
+      endif
+
+c *** PEER NGAEast Sigma Models *****
+c     Goulet et al., 2018 (PEER Report 2018/08) **
+c     Model Numbers 7101 - 7103 (Composite Ergodic)
+c     Model Numbers 7104 - 7106 (Single Station)
+      if (jcalc .ge. 7101 .and. jcalc .le. 7106) then
         anper = 25
         minaper = 0.01
         maxaper = 10.0
