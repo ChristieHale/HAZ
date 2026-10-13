@@ -2435,6 +2435,23 @@ C     Model Numbers = 675-676
 
 
 
+c------------Added by Milad Jahed Orang February 26
+c ******* ESHM2020 Craton for 2023 NSHA *******
+
+c     Model Number = 1241
+      if ( jcalc .eq. 1241 ) then
+        anper = 23
+        minaper = 0.01
+        maxaper = 10.0
+      endif
+
+c     Model Number = 1242
+      if ( jcalc .eq. 1242 ) then
+        anper = 23
+        minaper = 0.01
+        maxaper = 10.0
+      endif
+
 c     Check for valid jcalc
       if ( anper .lt. 0 ) then
          write (*,'( 2x,''invalid jcalc:'',i7)') jcalc

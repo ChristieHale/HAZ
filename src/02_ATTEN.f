@@ -13012,3 +13012,169 @@ C     Compute HW Factor.
 
       return
       end
+
+c----------------------------------------------------------------------
+c----------- *** ESHM (2020) Craton ****-----------------------------
+c---------- Written by Milad Jahed Orang --- February 26------------------
+C   This model is develoed based ESHM2020 Craton for the NSHA2023
+C   following procedures described in Kotha et al (2020))
+C   Coefficients are from the OpenQuake ESHM20Craton model (hazardlib/gsim/eshm20_craton.py)
+C     Notes:
+C        Median for the reference hard-rock condition, VS30 = 3000 m/s
+C           (use jcalc 1242 to add the Stewart et al. 2020 / Hashash et al. 2020
+C           site amplification for other VS30)
+C        Distance metric is Rrup
+C        Returns the median only; use with a sigma model (e.g., NGA-East 7101 - 7106)
+c ---------------------------------------------------------------------
+
+      subroutine S02_ESHM2020_Craton ( m, Rrup, specT, period2, lnY, iflag )
+
+      implicit none
+
+      integer MAXPER
+      parameter (MAXPER=24)
+      real period(MAXPER), e1(MAXPER), b1(MAXPER), b2(MAXPER)
+      real b3(MAXPER), c1(MAXPER), c2(MAXPER), c3(MAXPER)
+      real sigma_mu(MAXPER)
+      integer count1, count2, iflag, nPer, i
+      real e1T, b1T, b2T, b3T, c1T, c2T, c3T, sigma_muT
+      real specT, period1, period2, LNY
+      real m, Rrup, Mref, Rref, Mh, h
+      real fRg, fRa, fM
+
+      data period / 0.00, 0.01, 0.02, 0.025, 0.03, 0.04, 0.05, 0.075,
+     1              0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 1.0,
+     2              1.5, 2.0, 3.0, 4.0, 5.0, 7.5, 10.0 /
+      data e1 / 0.129433711, 0.441910296, 0.979123809, 1.043340609,
+     1          1.046568496, 1.007663453, 0.951568977, 0.766898927,
+     2          0.566921464, 0.316925422, 0.11688868, -0.04384238,
+     3          -0.198476724, -0.44174737, -0.637444826, -1.032362405,
+     4          -1.372802903, -1.888467249, -2.334523113, -3.03492008,
+     5          -3.576616284, -4.022628828, -4.876430882, -5.489149076 /
+	  data b1 / 0.516399477, 0.507166125, 0.464490221, 0.469670675,	0.476295173,
+     1          0.493809588, 0.507030793, 0.53781775, 0.563265478,	0.627617718,
+     2          0.691136578, 0.744829702, 0.799805296, 0.897281227,	0.992673275,
+     3          1.237960033, 1.445803895, 1.730211169, 1.920451196,	2.146848246,
+     4          2.262687822, 2.318743564, 2.373219226, 2.381480608 /
+	  data b2 / -0.120321874, -0.101879717, -0.113773494, -0.113450865, -0.114529545,
+     1          -0.115010836, -0.116999742, -0.125793038, -0.139088774,	-0.168967815,
+     2          -0.191138619, -0.208516033,	-0.223154824, -0.242204915,	-0.253908946,
+     3          -0.248353441, -0.229115739,	-0.19372035, -0.161746252,	-0.114822455,
+     4          -0.088526483, -0.077703803,	-0.064598854, -0.063354156 /
+	  data b3 / 0.209372712, 0.18428208, 0.167233525, 0.174065913, 0.188789465,
+     1          0.208535847, 0.227662857, 0.255897568, 0.285966324, 0.338414772,
+     2          0.377390003, 0.406488784, 0.433865913, 0.483912434, 0.526938715,
+     3          0.613138137, 0.691619273, 0.805618949, 0.908051097,	1.085140636,
+     4          1.227765677, 1.346637421, 1.529692859,	1.620019768 /
+	  data c1 / -1.498201004, -1.56753764, -1.628255712, -1.609088301, -1.57834524,
+     1          -1.52232245, -1.476122675, -1.390136419, -1.329050529, -1.252119937,
+     2          -1.205866449, -1.183520515,	-1.165570234, -1.151567345,	-1.144198433,
+     3          -1.127283148, -1.109473644,	-1.102389766, -1.094766133,	-1.090842122,
+     4          -1.090289917, -1.090249422,	-1.107500118, -1.127404432 /
+	  data c2 / 0.220432033, 0.222961321, 0.226150925, 0.224104272,	0.220697857,
+     1          0.215223039, 0.210020977, 0.198935495, 0.189118846,	0.167801938,
+     2          0.154400114, 0.146981292, 0.140633373, 0.133979351,	0.129943753,
+     3          0.121478498, 0.116810841, 0.114304314, 0.113858928,	0.115716685,
+     4          0.117770415, 0.118983394, 0.131643153, 0.141291747 /
+	  data c3 / -0.219311497, -0.217385086, -0.244152175, -0.257668045,	-0.270012906,
+     1          -0.287476719, -0.298269116,	-0.306252688, -0.296370961,	-0.266500375,
+     2          -0.236539992, -0.208303084,	-0.179796844, -0.136250996,	-0.112134931,
+     3          -0.07356648, -0.058350607, -0.03900021,	-0.029689284, -0.019805976,
+     4          -0.013578751, -0.008330191,	-0.00004888904, 0.005955963 /
+	  data sigma_mu / 0.467518017, 0.424145088,	0.453414268,0.456276007, 0.442617577,
+     1                0.432692547, 0.436894677,	0.445048551, 0.445057074, 0.408938323,
+     2                0.396717601, 0.385803497,	0.38677605,	0.395064996, 0.416676944,
+     3                0.424883715, 0.435248946,	0.494395041, 0.529656872, 0.550851606,
+     4                0.547911774, 0.536941451,	0.531853283, 0.56019897 /
+
+
+C Find the requested spectral period and corresponding coefficients
+      nPer = 24
+
+
+C First check for the PGA case (i.e., specT=0.0)
+      if (specT .eq. 0.0) then
+         period1 = period(1)
+         e1T = e1(1)
+         b1T = b1(1)
+         b2T = b2(1)
+         b3T = b3(1)
+         c1T = c1(1)
+         c2T = c2(1)
+         c3T = c3(1)
+         sigma_muT = sigma_mu(1)
+         goto 1011
+
+      elseif (specT .gt. 0.0) then
+C Now loop over the spectral period range of the attenuation relationship.
+         do i=2,nper-1
+            if (specT .ge. period(i) .and. specT .le. period(i+1) ) then
+               count1 = i
+               count2 = i+1
+               goto 1020
+            endif
+         enddo
+      endif
+
+C Selected spectral period is outside range defined by attenuaton model.
+      write (*,*)
+      write (*,*) 'ESHM (2020)_Craton'
+      write (*,*) 'attenuation model is not defined for a '
+      write (*,*) ' spectral period of: '
+      write (*,'(a10,f10.5)') ' Period = ',specT
+      write (*,*) 'This spectral period is outside the defined'
+      write (*,*) 'period range in the code or beyond the range'
+      write (*,*) 'of spectral periods for interpolation.'
+      write (*,*) 'Please check the input file.'
+      write (*,*)
+      stop 99
+
+C Interpolate the coefficients for the requested spectral period.
+ 1020       call S24_interp (period(count1),period(count2),e1(count1),e1(count2),
+     +                   specT,e1T,iflag)
+            call S24_interp (period(count1),period(count2),b1(count1),b1(count2),
+     +                   specT,b1T,iflag)
+            call S24_interp (period(count1),period(count2),b2(count1),b2(count2),
+     +                   specT,b2T,iflag)
+            call S24_interp (period(count1),period(count2),b3(count1),b3(count2),
+     +                   specT,b3T,iflag)
+            call S24_interp (period(count1),period(count2),c1(count1),c1(count2),
+     +                   specT,c1T,iflag)
+            call S24_interp (period(count1),period(count2),c2(count1),c2(count2),
+     +                   specT,c2T,iflag)
+            call S24_interp (period(count1),period(count2),c3(count1),c3(count2),
+     +                   specT,c3T,iflag)
+            call S24_interp (period(count1),period(count2),sigma_mu(count1),sigma_mu(count2),
+     +                   specT,sigma_muT,iflag)
+
+
+ 1011 period1 = specT
+
+c     Set constants
+	    Mref = 4.5
+	    Rref = 1.0
+	    Mh = 6.2
+	    h = 5.0
+
+c     Calculate magnitude scaling term (fM)
+      if (m .le. Mh) then
+         fM = b1T * (m - Mh) + b2T * ((m - Mh)**2.)
+      else
+         fM = b3T * (m - Mh)
+      endif
+
+c     Calculate distance scaling terms
+	    fRg = (c1T + c2T * (m - Mref)) * alog(sqrt(((Rrup**2.)+(h**2.))/ ((Rref**2.)+(h**2.))))
+      fRa = (c3T/100)*((sqrt((Rrup**2.)+(h**2.)))-(sqrt((Rref**2.)+(h**2.))))
+
+c     Compute median ground motion
+      lnY = e1T + fM + fRg + fRa
+
+C     Convert ground motion to units of gals
+      lnY = lnY + 6.89
+
+      period1 = specT
+      period2 = period1
+
+      return
+      end

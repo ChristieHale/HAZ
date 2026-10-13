@@ -8375,6 +8375,27 @@ C     Set mb values for interface and slab cases
 
 
 
+c  ******* ESHM 2020 Craton Model *******
+c     Model Number = 1241
+      if ( jcalc .eq. 1241 ) then
+         call  S02_ESHM2020_Craton ( mag, rupdist, specT, period2, lnY, iflag )
+         attenname = 'ESHM(2020), Craton'
+      endif
+
+c---------ESHM 2020 Craton Model with Stewart (2020) and Hashash (2020)
+c       Model Number = 1242
+        if (jcalc .eq. 1242) then
+c         First call PGA value for non-linear part of the site amplification model
+          call S02_ESHM2020_Craton ( mag, rupdist, 0.0, period2, lnY, iflag )
+          PGAHR = exp(lnY-6.89)
+c         Next call ESHM2020 for hard rock (Vs30=3000m/s)
+          call S02_ESHM2020_Craton ( mag, rupdist, specT, period2, lnYHR, iflag )
+c         Now call for site amplification model
+          call S34_NGAEast_SiteAmp (vs, PGAHR, specT, lnsiteAmp, iflag)
+          lnY = lnYHR + lnsiteAmp
+          attenname = 'ESHM(2020), Craton, with S20 and H20'
+        endif
+
 c--------NGA-East 2018 Models with Ramos-Sepulveda et al. 2024 Adjustments
 c      Model Numbers 7301 - 7317
        if ( jcalc .ge. 7301 .and. jcalc .le. 7317 ) then
