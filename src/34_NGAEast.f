@@ -187,6 +187,209 @@ c     convert ground motion to units of gals (ok even for PGV, gets converted ba
 
 
 c ---------------------------------------------------------------------
+c ** Stewart et al. (2020) and Hashhash et al. (2020) NGA-East site amplification factors **
+c    Site conditions are relative to NGA-East reference site conditions with
+c    VS30 = 3000 m/s, kappa = 0.006 s
+c    Site amplification model is based on factor for Vs30=760 and an additional
+c         Flin (linear) and Fnl (nonlinear) for the selected Vs30 value.
+c    For the Fnl the PGA for the reference site condition is required [PGAHR].
+c
+c ---------------------------------------------------------------------
+      subroutine S34_NGAEast_SiteAmp ( vs, PGAHR, specT, siteAmp, iflag )
+
+      implicit none
+      include 'pfrisk.h'
+
+      integer MAXPER, i, nPer
+      parameter (MAXPER=40)
+      real vs, PGAHR, SiteAmp, period2, specT, Vref, Fv, F2
+      real Vl, Vu, Verf, w1, w2, Vw1, Vw2
+      real wimp1, wimp2, wimp3, wimp, wgr
+      real period(MAXPER), c(MAXPER), F760imp(MAXPER), F760gr(MAXPER)
+      real V1(MAXPER), V2(MAXPER)
+      real F3(MAXPER), F4(MAXPER), F5(MAXPER), Vc(MAXPER)
+      real cT, F760impT, F760grT, V1T, V2T
+      real F3T, F4T, F5T, VcT
+      real F760, Flin, Fnl, Vrefprime
+      integer iFlag, count1, count2
+
+      data period / -1.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.08, 0.1, 0.11,
+     1             0.112, 0.113, 0.114, 0.115, 0.116, 0.117, 0.118, 0.119, 0.12, 0.125,
+     2             0.13, 0.135, 0.14, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.75, 0.8, 1.0,
+     3             1.5, 2.0, 3.0, 4.0, 5.0, 7.5, 10.0 /
+
+      data c / -0.449, -0.29, -0.29, -0.303, -0.315, -0.331, -0.344, -0.348, -0.358, -0.372,
+     1         -0.3741, -0.37456, -0.37479, -0.37503, -0.37526, -0.37549, -0.37573, -0.37597,
+     2         -0.37621, -0.37645, -0.37768, -0.37898, -0.38036, -0.38182, -0.385, -0.403,
+     3         -0.417, -0.426, -0.452, -0.48, -0.51, -0.523, -0.557, -0.574, -0.584, -0.588,
+     4         -0.579, -0.558, -0.544, -0.507 /
+      data V1 / 331.0, 319.0, 319.0, 319.0, 319.0, 319.0, 319.0, 319.0, 318.38, 317.13, 315.27,
+     2          314.78, 314.52, 314.25, 313.98, 313.7, 313.41, 313.12, 312.82, 312.51, 310.9,
+     3          309.19, 307.38, 305.51, 301.63, 279.0, 249.88, 224.5, 216.5, 216.88, 226.88,
+     4          235.0, 254.75, 275.5, 296, 311.5, 321.25, 324.25, 325.0, 325.0 /
+      data V2 / 760.0, 760.0, 760.0, 760.0, 810.0, 900.0, 1010.0, 1380.0, 1450.0, 1900.0,
+     1          2000.0, 2000.0, 2000.0, 2000.0, 2000.0, 2000.0, 2000.0, 2000.0, 2000.0, 2000.0,
+     2          2000.0, 2000.0, 1800.0, 1775.0, 1500.0, 1072.91, 944.81, 867.45, 842.72, 822.12,
+     3          814.21, 810.0000, 790.00, 805.00, 810.00, 819.94, 821.33, 825.0, 819.76, 820.0 /
+      data F760imp / 0.3753, 0.185, 0.185, 0.185, 0.224, 0.283, 0.337, 0.475, 0.512, 0.674, 0.72998,
+     2               0.74137, 0.74742, 0.753, 0.75759, 0.76065, 0.76178, 0.7611, 0.75894, 0.75562,
+     3               0.73234, 0.71641, 0.6687, 0.66026, 0.586, 0.419, 0.332, 0.27, 0.209, 0.175,
+     4               0.127, 0.12, 0.095, 0.083, 0.079, 0.073, 0.066, 0.064, 0.056, 0.053 /
+      data F760gr / 0.297, 0.121, 0.121, 0.031, 0.0, 0.012, 0.062, 0.211, 0.237, 0.338, 0.377,
+     1              0.384, 0.388, 0.391, 0.394, 0.397, 0.4, 0.403, 0.406, 0.409, 0.422, 0.434,
+     2              0.444, 0.454, 0.47, 0.509, 0.509, 0.498, 0.473, 0.447, 0.386, 0.378, 0.344,
+     3              0.289, 0.258, 0.233, 0.224, 0.22, 0.216, 0.218 /
+
+
+      data F3 / 0.06089, 0.089417, 0.075204, 0.056603, 0.103599, 0.118356, 0.16781, 0.173858,
+     1          0.162486, 0.150834, 0.1436, 0.14122, 0.14004, 0.13887, 0.13772, 0.13657, 0.13543,
+     2          0.13431, 0.13319, 0.132082, 0.131419, 0.130782, 0.13309, 0.135578, 0.142721, 0.128154,
+     3          0.132857, 0.130701, 0.094143, 0.09888, 0.061011, 0.073572, 0.043672, 0.004796,
+     4          0.00164, 0.007458, 0.002694, 0.002417, 0.042192, 0.053289 /
+      data F4 / -0.08344, -0.44895, -0.43755, -0.41511, -0.49871, -0.48734, -0.58073, -0.53646,
+     1          -0.50667, -0.44661, -0.42607, -0.41883, -0.41525, -0.41171, -0.4082, -0.40472,
+     2          -0.40126, -0.39784, -0.39445, -0.39108, -0.38483, -0.37882, -0.37777, -0.37864,
+     3          -0.38264, -0.30481, -0.27506, -0.22825, -0.11591, -0.07793, -0.0178, -0.01592,
+     4          -0.00478, -0.00086, -0.00236, -0.00626, -0.00331, -0.00256, -0.00536, -0.00631 /
+      data F5 / -0.00667, -0.00175, -0.00131, -0.00098, -0.00127, -0.00169, -0.00187, -0.00259,
+     1          -0.00273, -0.00335, -0.00359, -0.00364, -0.00367, -0.00369, -0.00372, -0.00374,
+     2          -0.00377, -0.00379, -0.00382, -0.00384, -0.00387, -0.0039, -0.00392, -0.00396,
+     3          -0.0041, -0.00488, -0.00564, -0.00655, -0.00872, -0.01028, -0.01456, -0.01515,
+     4          -0.01823, -0.02, -0.01296, -0.01043, -0.01215, -0.01325, -0.01418, -0.01403 /
+      data Vc /2260.0, 2990.0, 2990.0, 2990.0, 2990.0, 2990.0, 2990.0, 2990.0, 2990.0, 2990.0,
+     1         2990.0, 2990.0, 2990.0, 2990.0, 2990.0, 2990.0, 2990.0, 2990.0, 2990.0, 2990.0,
+     2         2990.0, 2990.0, 2990.0, 2990.0, 2335.376, 1532.801, 1317.97, 1151.791, 1018.069,
+     3         938.516, 834.7709, 832.4085, 950.9678, 882.2115, 878.8883, 894.3879, 874.8681,
+     4         856.1077, 831.6034, 837.0494 /
+
+C     Set period independent Coefficients
+      Vl = 200.0
+      Vu = 2000.0
+      Vref = 760.0
+      w1 = 0.767
+      w2 = 0.1
+      Vw1 = 600.0
+      Vw2 = 400.0
+      nPer = 40
+
+C First check for the PGV case
+      if (specT .eq. -1.0) then
+         cT = c(1)
+         V1T = V1(1)
+         V2T = V2(1)
+         F760impT = F760imp(1)
+         F760grT = F760gr(1)
+         F3T = F3(1)
+         F4T = F4(1)
+         F5T = F5(1)
+         VcT = Vc(1)
+         goto 1011
+C Next check for PGA case
+      elseif (specT .eq. 0.0) then
+         cT = c(2)
+         V1T = V1(2)
+         V2T = V2(2)
+         F760impT = F760imp(2)
+         F760grT = F760gr(2)
+         F3T = F3(2)
+         F4T = F4(2)
+         F5T = F5(2)
+         VcT = Vc(2)
+         goto 1011
+      endif
+
+C   For other periods, loop over the spectral period range of the site amplification model.
+      do i=3,nper-1
+         if (specT .ge. period(i) .and. specT .le. period(i+1) ) then
+            count1 = i
+            count2 = i+1
+            goto 1020
+         endif
+      enddo
+
+C Selected spectral period is outside range defined by attenuaton model.
+      write (*,*)
+      write (*,*) 'Stewart et al. (2020) Site Amplification'
+      write (*,*) ' model is not defined for a '
+      write (*,*) ' spectral period of: '
+      write (*,'(a10,f10.5)') ' Period = ',specT
+      write (*,*) 'This spectral period is outside the defined'
+      write (*,*) 'period range in the code or beyond the range'
+      write (*,*) 'of spectral periods for interpolation.'
+      write (*,*) 'Please check the input file.'
+      write (*,*)
+      stop 99
+
+C Interpolate the coefficients for the requested spectral period.
+ 1020 call S24_interp (period(count1),period(count2),c(count1),c(count2),
+     +                   specT,cT,iflag)
+      call S24_interp (period(count1),period(count2),V1(count1),V1(count2),
+     +                   specT,V1T,iflag)
+      call S24_interp (period(count1),period(count2),V2(count1),V2(count2),
+     +                   specT,V2T,iflag)
+      call S24_interp (period(count1),period(count2),F760imp(count1),F760imp(count2),
+     +                   specT,F760impT,iflag)
+      call S24_interp (period(count1),period(count2),F760gr(count1),F760gr(count2),
+     +                   specT,F760grT,iflag)
+      call S24_interp (period(count1),period(count2),F3(count1),F3(count2),
+     +                   specT,F3T,iflag)
+      call S24_interp (period(count1),period(count2),F4(count1),F4(count2),
+     +                   specT,F4T,iflag)
+      call S24_interp (period(count1),period(count2),F5(count1),F5(count2),
+     +                   specT,F5T,iflag)
+      call S24_interp (period(count1),period(count2),Vc(count1),Vc(count2),
+     +                   specT,VcT,iflag)
+
+ 1011 period2 = specT
+
+C     First compute the weight parameters
+      if (vs .ge. Vw1) then
+         wimp = w1
+      elseif (vs .lt. Vw2) then
+         wimp = w2
+      else
+         wimp = (w1-w2)*(alog(Vs/Vw2)/alog(Vw1/Vw2)) + w2
+      endif
+      wgr = 1.0 - wimp
+
+C     Now compute the F760 term
+      F760 = wimp*F760impT + wgr*F760grT
+
+C     Now compute the Fv term
+      if (vs .ge. Vl .and.  vs .le. V1T) then
+         Fv = cT*alog(V1T/Vref)
+      elseif (vs .gt. V1T .and. vs .le. V2T) then
+         Fv = cT*alog(Vs/Vref)
+      elseif (vs .gt. V2T .and. vs .le. Vu) then
+         Fv = cT*alog(V2T/Vref)
+      elseif (vs .gt. Vu .and. vs .le. 3000.0) then
+         Fv = cT*alog(V2T/Vref) - (cT*alog(V2T/Vref)+F760)*(alog(vs/Vu)/alog(3000.0/Vu))
+      endif
+
+      Flin = F760 + Fv
+
+
+
+C     Now compute the nonlinear part of the site amplification model
+C     Apply the limit of Vref=760 for T<0.4sec and Vref=3000 for T>=0.4sec consistent with USGS implementation
+      if (specT .ge. 0.4) then
+          Vrefprime = 3000.0
+      else
+          Vrefprime = 760.0
+      endif
+      F2 = F4T*(Exp(F5T*(min(vs,Vrefprime)-360.0)) - Exp(F5T*(Vrefprime - 360.0)))
+      if (Vs .lt. VcT) then
+         Fnl = F2*alog((PGAHR+F3T)/F3T)
+      else
+         Fnl = 0.0
+      endif
+
+      SiteAmp = Flin + Fnl
+
+      return
+      end
+
+c ---------------------------------------------------------------------
 c ** Ramos-Sepulveda et al., 2024 (Earthquake Spectra with erratum to Table 1) **
 c    Data-driven adjustments for combined use of NGA-East hard-rock ground motion
 c    and site amplification models

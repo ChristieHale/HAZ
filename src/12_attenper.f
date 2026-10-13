@@ -2363,6 +2363,15 @@ c     Model Numbers 7104 - 7106 (Single Station)
         maxaper = 10.0
       endif
 
+c *** PEER NGAEast Models with Site Adjustment Factors***
+c     Goulet et al., 2018 (PEER Report 2018/08), Stewart et al. (2020), Hashash et al. (2020)
+c     Model Numbers 7201 - 7217
+      if (jcalc .ge. 7201 .and. jcalc .le. 7217) then
+        anper = 25
+        minaper = 0.01
+        maxaper = 10.0
+      endif
+
 c *** PEER NGAEast Models with Ramos Sepulveda *****
 c     Goulet et al., 2018 (PEER Report 2018/08), Ramos-Sepulveda et al., 2024 (Earthquake Spectra with erratum to Table 1)
 c     Model Numbers 7301 - 7317 (Median with Ramos-Sepulveda et al. 2024 adjustment)

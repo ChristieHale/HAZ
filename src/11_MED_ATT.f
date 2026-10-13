@@ -30,7 +30,7 @@
       real sigmaH, phiH, tauH, sclass, pgaref, sjb, ACadjfac, mbinter
       real mbslab, mohodepth, rockpga, spectpga, vsrock, x, z25ag, z25p
       integer CasBas, iRegion, epiflag, pnwbflag
-      real lnOrig, lnAdj
+      real PGAHR, lnSiteAmp, lnYHR, lnOrig, lnAdj
 
 C LNY IS EXPECTED INTENSITY FOR THIS MAGNITUDE AND CLOSEST DISTANCE
       lnY = 1.e30
@@ -7584,6 +7584,25 @@ c     Model Numbers 7001 - 7017
         attenname = 'NGAEast_2018_MedianModel_No'//trim(adjustl(number))
       endif
 
+c----------------------
+c     Goulet et al., 2018 (PEER Report 2018/08) - Appendix H (17 median models)
+c        with application of Stewart et al. (2020) and Hashhash et al. (2020) site amplification factors
+c     Model Numbers 7201 - 7217
+      if ( jcalc .ge. 7201 .and. jcalc .le. 7217 ) then
+        imod = jcalc - 7200
+        write(number, '(i0)') imod
+C       First Call PGA value for non-linear part of the site amplification model
+        call S34_NGAEast_Med ( mag, rupDist, 0.0, imod, period2, lnY, iflag )
+        PGAHR = exp(lnY-6.89)
+C       Next call NGA-East model for Hard Rock (Vs=3000m/s) ground conditions
+        call S34_NGAEast_Med ( mag, rupDist, specT, imod, period2, lnYHR, iflag )
+C       Now call for Site amplification model
+        call S34_NGAEast_SiteAmp (vs, PGAHR, specT, lnsiteAmp, iflag)
+        lnY = lnYHR + lnsiteAmp
+
+        attenname = 'NGAEast_2018_MedianModel_No'//trim(adjustl(number))//'_with_S20_H20'
+      endif
+c----------------------
 c     Goulet et al., 2018 (PEER Report 2018/08) - NGA-East Composite Ergodic Sigma, CENA, Low
 c     Model Number = 7101
       if ( jcalc .eq. 7101 ) then
