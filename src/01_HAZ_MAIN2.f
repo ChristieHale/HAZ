@@ -1,4 +1,4 @@
-      program haz45_3
+      program haz45_4
 
 c     Probabilisitic Seismic Hazard Program (PSHA)
 
@@ -9,8 +9,9 @@ c     Probabilisitic Seismic Hazard Program (PSHA)
 c     Write Program information to the screen.
       write (*,*) '*********************************'
       write (*,*) '*      Seismic Hazard Code      *'
-      write (*,*) '*         Release 45.3          *'
-      write (*,*) '*          March, 2023          *'
+      write (*,*) '*         Release 45.4          *'
+      write (*,*) '*       Under Development       *'
+      write (*,*) '*         October 2026          *'
       write (*,*) '*********************************'
       write (*,*)
 

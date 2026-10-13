@@ -103,7 +103,7 @@ c     Input options
 
       call S21_CheckDim ( nProb, MAX_Prob, 'MAX_PROB ' )
       call S21_CheckDim ( nProb, MAX_Prob, 'MAX_ATTEN ' )
-      write (18,*) '45.3 Haz45.3 log file'
+      write (18,*) '45.4 Haz45.4 log file'
       write (18,'( a80)') title
       write (18,*)
       write (18,*) 'Summary of Attenuation relationship used in the analysis:'
