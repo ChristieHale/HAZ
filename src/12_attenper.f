@@ -2353,6 +2353,15 @@ c     Model Numbers 7001 - 7017 (Median, VS30 = 3000 m/s)
         maxaper = 10.0
       endif
 
+c *** PEER NGAEast Models with Ramos Sepulveda *****
+c     Goulet et al., 2018 (PEER Report 2018/08), Ramos-Sepulveda et al., 2024 (Earthquake Spectra with erratum to Table 1)
+c     Model Numbers 7301 - 7317 (Median with Ramos-Sepulveda et al. 2024 adjustment)
+      if (jcalc .ge. 7301 .and. jcalc .le. 7317) then
+        anper = 25
+        minaper = 0.01
+        maxaper = 10.0
+      endif
+
 C *** Abrahamson and Gulerce (AG) 2020 Subduction model ****
 C     Model Numbers = 390-399, 1398, 2398, 2392
 C     Model Numbers = 390-399

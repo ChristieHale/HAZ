@@ -184,3 +184,92 @@ c     convert ground motion to units of gals (ok even for PGV, gets converted ba
 
       return
       end
+
+
+c ---------------------------------------------------------------------
+c ** Ramos-Sepulveda et al., 2024 (Earthquake Spectra with erratum to Table 1) **
+c    Data-driven adjustments for combined use of NGA-East hard-rock ground motion
+c    and site amplification models
+c
+c ---------------------------------------------------------------------
+      subroutine S34_NGAEast_RS24Adj ( vs30, specT, period2, lnadj, iflag )
+
+      implicit none
+      include 'pfrisk.h'
+
+      integer MAXPER
+      parameter (MAXPER=26)
+      integer iflag, nper, i, count1, count2
+      real vs30, specT, lnY, period2
+      real period(MAXPER), mu(MAXPER), b(MAXPER)
+      real period1, muT, bT, lnadj, ck
+
+      data period / 0.000, -1.000, 0.010, 0.020, 0.030, 0.040, 0.050, 0.075, 0.080, 0.100,
+     1       0.150, 0.200, 0.250, 0.300, 0.400, 0.500, 0.750, 0.800, 1.00, 1.50,
+     2       2.00, 3.00, 4.00, 5.00, 7.50, 10.0 /
+      data mu / -0.040, -0.085, -0.070, -0.210, -0.211, -0.211, -0.212, -0.205, -0.205,
+     1      -0.205, -0.192, -0.149, -0.132, -0.121, -0.097, -0.090, -0.040, -0.037, -0.010,
+     2      0.045, 0.140, 0.270, 0.315, 0.377, 0.448, 0.401 /
+      data b / -0.346, -0.250, -0.352, -0.305, -0.261, -0.230, -0.220, -0.220, -0.220,
+     1      -0.220, -0.220, -0.220, -0.220, -0.220, -0.220, -0.220, -0.205, -0.193, -0.175,
+     2      -0.173, -0.173, -0.173, -0.173, -0.173, -0.173, -0.173 /
+
+c     Find the requested spectral period and corresponding coefficients
+      nper = 26
+
+c     First check for the PGA or PGV case
+      if (specT .eq. 0.0) then
+        period1 = period(1)
+        muT = mu(1)
+        bT = b(1)
+        goto 1011
+      elseif (specT .eq. -1.0) then
+        period1 = period(2)
+        muT = mu(2)
+        bT = b(2)
+        goto 1011
+      endif
+
+c     For other periods, loop over the spectral period range of the attenuation relationship.
+      do i=3,nper-1
+        if (specT .ge. period(i) .and. specT .le. period(i+1) ) then
+          count1 = i
+          count2 = i+1
+          goto 1020
+        endif
+      enddo
+
+c     Selected spectral period is outside range defined by attenuaton model.
+      write (*,*)
+      write (*,*) 'Ramos-Sepulveda et al. (2024) adjustment factors'
+      write (*,*) 'model is not defined for a spectral period of: '
+      write (*,'(a10,f10.5)') ' Period = ',specT
+      write (*,*) 'This spectral period is outside the defined'
+      write (*,*) 'period range in the code or beyond the range'
+      write (*,*) 'of spectral periods for interpolation.'
+      write (*,*) 'Please check the input file.'
+      write (*,*)
+      stop 99
+
+c     Interpolate the coefficients for the requested spectral period.
+ 1020 call S24_interp (period(count1),period(count2),mu(count1),mu(count2),
+     +                   specT,muT,iflag)
+      call S24_interp (period(count1),period(count2),b(count1),b(count2),
+     +                   specT,bT,iflag)
+
+ 1011 period1 = specT
+
+c     Compute ck from Equation 6 (stiff site modification)
+      if (vs30 .le. 1000.) then
+        ck = 0.0
+      else if (vs30 .lt. 2000.) then
+        ck = bT*alog(vs30/1000.)
+      else
+        ck = bT*alog(2.)
+      endif
+
+c     Combine base adjustment with stiff site modification
+      lnadj = muT + ck
+
+      return
+      end

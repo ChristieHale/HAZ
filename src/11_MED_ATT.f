@@ -30,6 +30,7 @@
       real sigmaH, phiH, tauH, sclass, pgaref, sjb, ACadjfac, mbinter
       real mbslab, mohodepth, rockpga, spectpga, vsrock, x, z25ag, z25p
       integer CasBas, iRegion, epiflag, pnwbflag
+      real lnOrig, lnAdj
 
 C LNY IS EXPECTED INTENSITY FOR THIS MAGNITUDE AND CLOSEST DISTANCE
       lnY = 1.e30
@@ -8355,6 +8356,16 @@ C     Set mb values for interface and slab cases
 
 
 
+c--------NGA-East 2018 Models with Ramos-Sepulveda et al. 2024 Adjustments
+c      Model Numbers 7301 - 7317
+       if ( jcalc .ge. 7301 .and. jcalc .le. 7317 ) then
+         imod = jcalc - 7300
+         write(number, '(i0)') imod
+         call S34_NGAEast_Med ( mag, rupDist, specT, imod, period2, lnOrig, iflag )
+         call S34_NGAEast_RS24Adj ( vs, specT, period2, lnAdj, iflag )
+         lnY = lnOrig + lnAdj
+         attenname = 'NGAEast_2018_MedianModel_No'//trim(adjustl(number))//'_with_RS24Adj'
+       endif
 c     Check for valid jcalc
       if ( lnY .gt. 1.0e10 ) then
          write (*,'( 2x,''invalid jcalc:'',i7,3f10.4,e12.4,f12.4)') jcalc, mag,
