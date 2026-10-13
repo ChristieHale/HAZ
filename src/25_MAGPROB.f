@@ -317,7 +317,8 @@ c             FOR THE SECOND EXPONENTIAL MODEL.
 C             Now normalize BC Hydro Model by total
               pmag(iParam,iWidth) = pmag(iParam,iWidth)/sumnorm
 
-c           BC Hydro Maximum Moment Model (boxcar from magU-deltaM1 to magU)
+c           BC Hydro Maximum Moment Model (boxcar of width deltaM1 centered on the
+c           reference magnitude, i.e., from magU-deltaM1 to magU with magU = refMag + deltaM1/2)
             elseif ( magRecur(iFlt,iParam,iWidth) .eq. 8. ) then
                 deltaM1 = mpdf_param(iFlt,iParam,iWidth,1)
                 magcut = magU - mpdf_param(iFlt,iParam,iWidth,1)
