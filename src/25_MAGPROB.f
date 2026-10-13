@@ -317,6 +317,28 @@ c             FOR THE SECOND EXPONENTIAL MODEL.
 C             Now normalize BC Hydro Model by total
               pmag(iParam,iWidth) = pmag(iParam,iWidth)/sumnorm
 
+c           BC Hydro Maximum Moment Model (boxcar from magU-deltaM1 to magU)
+            elseif ( magRecur(iFlt,iParam,iWidth) .eq. 8. ) then
+                deltaM1 = mpdf_param(iFlt,iParam,iWidth,1)
+                magcut = magU - mpdf_param(iFlt,iParam,iWidth,1)
+                if(mL .lt. magcut)then
+                    if(mU .le. magcut)then
+                        pmag(iParam,iWidth) = 0.
+                    elseif(mU .gt. magcut .and. mU .lt. magU)then
+                        pmag(iParam,iWidth) = (mU-magcut)/deltaM1
+                    elseif(mU .ge. magU)then
+                        pmag(iParam,iWidth) = 1.
+                    endif
+                elseif(mL .ge. magcut .and. mL .lt. magU)then
+                    if(mU .gt. magcut .and. mU .lt. magU)then
+                        pmag(iParam,iWidth) = (mU-mL)/deltaM1
+                    elseif(mU .ge. magU)then
+                        pmag(iParam,iWidth) = (magU-ml)/deltaM1
+                    endif
+                elseif(mL .ge. magU)then
+                    pmag(iParam,iWidth) = 0.
+                endif
+
 c           WAACY Model
             elseif ( magRecur(iFlt,iParam,iWidth) .eq. 10. ) then
 c             Reset mU to magU if necessary (when last mag is not a full step size)

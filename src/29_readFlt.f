@@ -657,6 +657,8 @@ c                Set max mag
                    maxMag(iFlt,i,iWidth) = refMag1(iWidth,iRefMag) + rP3(iRecur)
                  elseif (magRecur1(iRecur) .eq. 6 ) then
                    maxMag(iFlt,i,iWidth) = refMag1(iWidth,iRefMag)
+                 elseif (magRecur1(iRecur) .eq. 8 ) then
+                   maxMag(iFlt,i,iWidth) = refMag1(iWidth,iRefMag) + rP3(iRecur)
                  elseif (magRecur1(iRecur) .eq. 10 ) then
                    if ( rp5(iRecur) .eq. 0. ) then
                      maxMag(iFlt,i,iWidth) = rp2(iRecur)
@@ -1418,6 +1420,8 @@ c                Set max mag
                    maxMag(iFlt,i,iWidth) = refMag1(iWidth,iRefMag) + rP3(iRecur)
                  elseif (magRecur1(iRecur) .eq. 6 ) then
                    maxMag(iFlt,i,iWidth) = refMag1(iWidth,iRefMag)
+                 elseif (magRecur1(iRecur) .eq. 8 ) then
+                   maxMag(iFlt,i,iWidth) = refMag1(iWidth,iRefMag) + rP3(iRecur)
                  elseif (magRecur1(iRecur) .eq. 10 ) then
                    if ( rp5(iRecur) .eq. 0. ) then
                      maxMag(iFlt,i,iWidth) = rp2(iRecur)
@@ -2163,6 +2167,8 @@ c                Set max mag
                    maxMag(iFlt,i,iWidth) = refMag1(iWidth,iRefMag) + rP3(iRecur)
                  elseif (magRecur1(iRecur) .eq. 6 ) then
                    maxMag(iFlt,i,iWidth) = refMag1(iWidth,iRefMag)
+                 elseif (magRecur1(iRecur) .eq. 8 ) then
+                   maxMag(iFlt,i,iWidth) = refMag1(iWidth,iRefMag) + rP3(iRecur)
                  elseif (magRecur1(iRecur) .eq. 10 ) then
                    if ( rp5(iRecur) .eq. 0. ) then
                      maxMag(iFlt,i,iWidth) = rp2(iRecur)
