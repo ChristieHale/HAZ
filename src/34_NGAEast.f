@@ -167,7 +167,8 @@ c     interpolate between magnitudes
       lnSAfm(2) = ((((lnSAf(2)-lnSAf(4))/(table_m(m1d2)-table_m(m2d2)))
      1                *(table_m(m1d2)-m))-lnSAf(2))*(-1)
 
-c     interpolate between distances
+c     interpolate between distances: linear in Rrup between the 0 and 1 km table rows and log-log beyond
+c     (the USGS/OpenQuake implementation is log-log at all distances, with Rrup = 0 set to 1e-5 km)
       if (Rrup .le. 1.) then
         lnY = ((((lnSAfm(1)-lnSAfm(2))/(table_r(m1d1)-table_r(m1d2)))
      1                *(table_r(m1d1)-Rrup))-lnSAfm(1))*(-1)
@@ -231,6 +232,8 @@ c ---------------------------------------------------------------------
      1          2000.0, 2000.0, 2000.0, 2000.0, 2000.0, 2000.0, 2000.0, 2000.0, 2000.0, 2000.0,
      2          2000.0, 2000.0, 1800.0, 1775.0, 1500.0, 1072.91, 944.81, 867.45, 842.72, 822.12,
      3          814.21, 810.0000, 790.00, 805.00, 810.00, 819.94, 821.33, 825.0, 819.76, 820.0 /
+c     F760imp at 0.1 sec is the published value (0.674); the USGS/OpenQuake implementation uses a
+c     smoothed value (0.521)
       data F760imp / 0.3753, 0.185, 0.185, 0.185, 0.224, 0.283, 0.337, 0.475, 0.512, 0.674, 0.72998,
      2               0.74137, 0.74742, 0.753, 0.75759, 0.76065, 0.76178, 0.7611, 0.75894, 0.75562,
      3               0.73234, 0.71641, 0.6687, 0.66026, 0.586, 0.419, 0.332, 0.27, 0.209, 0.175,
@@ -241,6 +244,8 @@ c ---------------------------------------------------------------------
      3              0.289, 0.258, 0.233, 0.224, 0.22, 0.216, 0.218 /
 
 
+c     The PGA coefficients (second values of F3, F4, F5, Vc) are the 0.001 sec values of Hashash et al. (2020)
+c     Table 1; the USGS/OpenQuake implementation uses the 0.01 sec values for PGA
       data F3 / 0.06089, 0.089417, 0.075204, 0.056603, 0.103599, 0.118356, 0.16781, 0.173858,
      1          0.162486, 0.150834, 0.1436, 0.14122, 0.14004, 0.13887, 0.13772, 0.13657, 0.13543,
      2          0.13431, 0.13319, 0.132082, 0.131419, 0.130782, 0.13309, 0.135578, 0.142721, 0.128154,
@@ -384,6 +389,7 @@ C     Now compute the Fv term
 
 C     Now compute the nonlinear part of the site amplification model
 C     Apply the limit of Vref=760 for T<0.4sec and Vref=3000 for T>=0.4sec consistent with USGS implementation
+C     PGV (specT = -1) uses Vref=760; the USGS/OpenQuake implementation uses Vref=3000 for PGV
       if (specT .ge. 0.4) then
           Vrefprime = 3000.0
       else
