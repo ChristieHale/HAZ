@@ -8375,6 +8375,14 @@ C     Set mb values for interface and slab cases
 
 
 
+c  ******* Allen (2012) Model, Southeastern Australia *******
+c     Model Number = 1234
+      if ( jcalc .eq. 1234 ) then
+         call S02_Allen_2012 ( mag, rupDist, depth, specT, period2, lnY,
+     1                         sigma, iflag )
+         attenname = 'Allen (2012), Southeastern Australia'
+      endif
+
 c  ******* Somerville et al. (2009) Models, Australia *******
 c     Model Number = 1235 (Cratonic)
       if ( jcalc .eq. 1235 ) then
