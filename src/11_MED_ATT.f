@@ -8463,6 +8463,26 @@ c      Model Numbers 7301 - 7317
          lnY = lnOrig + lnAdj
          attenname = 'NGAEast_2018_MedianModel_No'//trim(adjustl(number))//'_with_RS24Adj'
        endif
+
+c--------NGA-East 2018 Models with Stewart et al. (2020) and Hashash et al. (2020) site amplification
+c        and Ramos-Sepulveda et al. (2024) adjustments (the adjustments are added to the ground motion
+c        from the hard-rock model plus site amplification)
+c      Model Numbers 7401 - 7417
+       if ( jcalc .ge. 7401 .and. jcalc .le. 7417 ) then
+         imod = jcalc - 7400
+         write(number, '(i0)') imod
+C        First Call PGA value for non-linear part of the site amplification model
+         call S34_NGAEast_Med ( mag, rupDist, 0.0, imod, period2, lnY, iflag )
+         PGAHR = exp(lnY-6.89)
+C        Next call NGA-East model for Hard Rock (Vs=3000m/s) ground conditions
+         call S34_NGAEast_Med ( mag, rupDist, specT, imod, period2, lnYHR, iflag )
+C        Now call for Site amplification model
+         call S34_NGAEast_SiteAmp (vs, PGAHR, specT, lnsiteAmp, iflag)
+C        Now call for the Ramos-Sepulveda et al. (2024) adjustment
+         call S34_NGAEast_RS24Adj ( vs, specT, period2, lnAdj, iflag )
+         lnY = lnYHR + lnsiteAmp + lnAdj
+         attenname = 'NGAEast_2018_MedianModel_No'//trim(adjustl(number))//'_with_S20_H20_RS24Adj'
+       endif
 c     Check for valid jcalc
       if ( lnY .gt. 1.0e10 ) then
          write (*,'( 2x,''invalid jcalc:'',i7,3f10.4,e12.4,f12.4)') jcalc, mag,
