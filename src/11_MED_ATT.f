@@ -29,7 +29,7 @@
       real depthTop1, s03vfs, s03sr, s03fr, soil, GB, GC, pga4nl
       real sigmaH, phiH, tauH, sclass, pgaref, sjb, ACadjfac, mbinter
       real mbslab, mohodepth, rockpga, spectpga, vsrock, x, z25ag, z25p
-      integer CasBas, iRegion, epiflag, pnwbflag
+      integer CasBas, iRegion, epiflag, pnwbflag, CratFlag
       real PGAHR, lnSiteAmp, lnYHR, lnOrig, lnAdj
 
 C LNY IS EXPECTED INTENSITY FOR THIS MAGNITUDE AND CLOSEST DISTANCE
@@ -8374,6 +8374,24 @@ C     Set mb values for interface and slab cases
       endif
 
 
+
+c  ******* Bayless and Somerville (2024) Model, Australia *******
+c     Model Number = 1237 (Cratonic)
+c     Model Number = 1240 (Non-Cratonic)
+c     Z1.0 scaling is not applied, as recommended by the model developers
+      if ( jcalc .eq. 1237 .or. jcalc .eq. 1240 ) then
+         if ( jcalc .eq. 1237 ) then
+            CratFlag = 1
+            attenname = 'Bayless and Somerville (2024), Australia, Cratonic'
+         else
+            CratFlag = 0
+            attenname = 'Bayless and Somerville (2024), Australia, Non-Cratonic'
+         endif
+         basinflag = 0
+         call S02_BS_2024 ( mag, dipavgd, RupWidth, depthTop, rupDist, Rx, Ry0,
+     1                      vs, depthvs10, hwflag, basinflag, specT, period2,
+     2                      lnY, sigma, phi, tau, iflag, CratFlag )
+      endif
 
 c  ******* Allen (2022) Far-field North Australian Craton Model *******
 c     Model Number = 1239

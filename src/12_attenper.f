@@ -2435,6 +2435,14 @@ C     Model Numbers = 675-676
 
 
 
+c ******* Bayless and Somerville (2024), Australia *******
+c     Model Numbers = 1237 (Cratonic), 1240 (Non-Cratonic)
+      if ( jcalc .eq. 1237 .or. jcalc .eq. 1240 ) then
+        anper = 63
+        minaper = 0.01
+        maxaper = 10.0
+      endif
+
 c ******* Allen (2022) Far-field North Australian Craton *******
 c     Model Number = 1239
       if ( jcalc .eq. 1239 ) then
