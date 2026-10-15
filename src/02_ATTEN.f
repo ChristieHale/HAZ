@@ -13022,7 +13022,7 @@ C     Bull Earthquake Eng 18:6119-6148
 C   Coefficients are from Table 1 of Weatherill and Cotton (2020)
 C     Notes:
 C        Median for the reference hard-rock condition, VS30 = 3000 m/s
-C           (use jcalc 1242 to add the Stewart et al. 2020 / Hashash et al. 2020
+C           (use jcalc 1239 to add the Stewart et al. 2020 / Hashash et al. 2020
 C           site amplification for other VS30)
 C        Distance metric is Rrup
 C        Returns the median only; use with a sigma model (e.g., NGA-East 7101 - 7106)

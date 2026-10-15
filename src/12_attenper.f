@@ -2435,57 +2435,50 @@ C     Model Numbers = 675-676
 
 
 
-c ******* Allen (2012), Southeastern Australia *******
-c     Model Number = 1234
-      if ( jcalc .eq. 1234 ) then
-        anper = 18
-        minaper = 0.01
-        maxaper = 4.0
-      endif
-
 c ******* Somerville et al. (2009), Australia *******
-c     Model Numbers = 1235 (Cratonic), 1236 (Non-Cratonic)
-      if ( jcalc .eq. 1235 .or. jcalc .eq. 1236 ) then
+c     Model Numbers = 1234 (Cratonic), 1235 (Non-Cratonic)
+      if ( jcalc .eq. 1234 .or. jcalc .eq. 1235 ) then
         anper = 22
         minaper = 0.01
         maxaper = 10.0
       endif
 
-c ******* Bayless and Somerville (2024), Australia *******
-c     Model Numbers = 1237 (Cratonic), 1240 (Non-Cratonic)
-      if ( jcalc .eq. 1237 .or. jcalc .eq. 1240 ) then
-        anper = 63
+c ******* Allen (2012), Southeastern Australia *******
+c     Model Number = 1236
+      if ( jcalc .eq. 1236 ) then
+        anper = 18
         minaper = 0.01
-        maxaper = 10.0
+        maxaper = 4.0
       endif
 
 c ******* Drouet (2015), Brazil *******
-c     Model Number = 1238
-      if ( jcalc .eq. 1238 ) then
+c     Model Number = 1237
+      if ( jcalc .eq. 1237 ) then
         anper = 20
         minaper = 0.01
         maxaper = 3.0
       endif
 
-c ******* Allen (2022) Far-field North Australian Craton *******
-c     Model Number = 1239
-      if ( jcalc .eq. 1239 ) then
-        anper = 20
-        minaper = 0.1
-        maxaper = 10.0
-      endif
-
 c ******* Weatherill and Cotton (2020) ESHM20 Craton *******
-c     Model Number = 1241
-      if ( jcalc .eq. 1241 ) then
+c     Model Numbers = 1238 (hard rock), 1239 (with S20 and H20 site amplification)
+      if ( jcalc .eq. 1238 .or. jcalc .eq. 1239 ) then
         anper = 23
         minaper = 0.01
         maxaper = 10.0
       endif
 
-c     Model Number = 1242
-      if ( jcalc .eq. 1242 ) then
-        anper = 23
+c ******* Allen (2022) Far-field North Australian Craton *******
+c     Model Number = 1240
+      if ( jcalc .eq. 1240 ) then
+        anper = 20
+        minaper = 0.1
+        maxaper = 10.0
+      endif
+
+c ******* Bayless and Somerville (2024), Australia *******
+c     Model Numbers = 1241 (Cratonic), 1242 (Non-Cratonic)
+      if ( jcalc .eq. 1241 .or. jcalc .eq. 1242 ) then
+        anper = 63
         minaper = 0.01
         maxaper = 10.0
       endif

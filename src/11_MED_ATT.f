@@ -8375,35 +8375,72 @@ C     Set mb values for interface and slab cases
 
 
 
-c  ******* Allen (2012) Model, Southeastern Australia *******
-c     Model Number = 1234
-      if ( jcalc .eq. 1234 ) then
-         call S02_Allen_2012 ( mag, rupDist, depth, specT, period2, lnY,
-     1                         sigma, iflag )
-         attenname = 'Allen (2012), Southeastern Australia'
-      endif
-
 c  ******* Somerville et al. (2009) Models, Australia *******
-c     Model Number = 1235 (Cratonic)
-      if ( jcalc .eq. 1235 ) then
+c     Model Number = 1234 (Cratonic)
+      if ( jcalc .eq. 1234 ) then
          call S02_Somerville_2009_Craton ( mag, jbdist, specT, period2, lnY,
      1                                     sigma, iflag )
          attenname = 'Somerville et al. (2009), Australia, Cratonic'
       endif
 
-c     Model Number = 1236 (Non-Cratonic)
-      if ( jcalc .eq. 1236 ) then
+c     Model Number = 1235 (Non-Cratonic)
+      if ( jcalc .eq. 1235 ) then
          call S02_Somerville_2009_NonCraton ( mag, jbdist, specT, period2, lnY,
      1                                        sigma, iflag )
          attenname = 'Somerville et al. (2009), Australia, Non-Cratonic'
       endif
 
+c  ******* Allen (2012) Model, Southeastern Australia *******
+c     Model Number = 1236
+      if ( jcalc .eq. 1236 ) then
+         call S02_Allen_2012 ( mag, rupDist, depth, specT, period2, lnY,
+     1                         sigma, iflag )
+         attenname = 'Allen (2012), Southeastern Australia'
+      endif
+
+c  ******* Drouet (2015) Model, Brazil *******
+c     Model Number = 1237
+      if ( jcalc .eq. 1237 ) then
+         call S02_Drouet_2015_Brazil ( mag, jbdist, specT, period2, lnY,
+     1                                 sigma, phi, tau, iflag )
+         attenname = 'Drouet (2015), Brazil'
+      endif
+
+c  ******* ESHM 2020 Craton Model *******
+c     Model Number = 1238
+      if ( jcalc .eq. 1238 ) then
+         call S02_ESHM2020_Craton ( mag, rupdist, specT, period2, lnY, iflag )
+         attenname = 'ESHM(2020), Craton'
+      endif
+
+c  ******* ESHM 2020 Craton Model with Stewart (2020) and Hashash (2020) *******
+c     Model Number = 1239
+      if ( jcalc .eq. 1239 ) then
+c        First call PGA value for non-linear part of the site amplification model
+         call S02_ESHM2020_Craton ( mag, rupdist, 0.0, period2, lnY, iflag )
+         PGAHR = exp(lnY-6.89)
+c        Next call ESHM2020 for hard rock (Vs30=3000m/s)
+         call S02_ESHM2020_Craton ( mag, rupdist, specT, period2, lnYHR, iflag )
+c        Now call for site amplification model
+         call S34_NGAEast_SiteAmp (vs, PGAHR, specT, lnsiteAmp, iflag)
+         lnY = lnYHR + lnsiteAmp
+         attenname = 'ESHM(2020), Craton, with S20 and H20'
+      endif
+
+c  ******* Allen (2022) Far-field North Australian Craton Model *******
+c     Model Number = 1240
+      if ( jcalc .eq. 1240 ) then
+         call S02_Allen_2022 ( mag, disthypo, vs, depth, specT, period2, lnY,
+     1                         sigma, phi, tau, iflag )
+         attenname = 'Allen (2022), Far-field North Australian Craton'
+      endif
+
 c  ******* Bayless and Somerville (2024) Model, Australia *******
-c     Model Number = 1237 (Cratonic)
-c     Model Number = 1240 (Non-Cratonic)
+c     Model Number = 1241 (Cratonic)
+c     Model Number = 1242 (Non-Cratonic)
 c     Z1.0 scaling is not applied, as recommended by the model developers
-      if ( jcalc .eq. 1237 .or. jcalc .eq. 1240 ) then
-         if ( jcalc .eq. 1237 ) then
+      if ( jcalc .eq. 1241 .or. jcalc .eq. 1242 ) then
+         if ( jcalc .eq. 1241 ) then
             CratFlag = 1
             attenname = 'Bayless and Somerville (2024), Australia, Cratonic'
          else
@@ -8415,43 +8452,6 @@ c     Z1.0 scaling is not applied, as recommended by the model developers
      1                      vs, depthvs10, hwflag, basinflag, specT, period2,
      2                      lnY, sigma, phi, tau, iflag, CratFlag )
       endif
-
-c  ******* Drouet (2015) Model, Brazil *******
-c     Model Number = 1238
-      if ( jcalc .eq. 1238 ) then
-         call S02_Drouet_2015_Brazil ( mag, jbdist, specT, period2, lnY,
-     1                                 sigma, phi, tau, iflag )
-         attenname = 'Drouet (2015), Brazil'
-      endif
-
-c  ******* Allen (2022) Far-field North Australian Craton Model *******
-c     Model Number = 1239
-      if ( jcalc .eq. 1239 ) then
-         call S02_Allen_2022 ( mag, disthypo, vs, depth, specT, period2, lnY,
-     1                         sigma, phi, tau, iflag )
-         attenname = 'Allen (2022), Far-field North Australian Craton'
-      endif
-
-c  ******* ESHM 2020 Craton Model *******
-c     Model Number = 1241
-      if ( jcalc .eq. 1241 ) then
-         call  S02_ESHM2020_Craton ( mag, rupdist, specT, period2, lnY, iflag )
-         attenname = 'ESHM(2020), Craton'
-      endif
-
-c---------ESHM 2020 Craton Model with Stewart (2020) and Hashash (2020)
-c       Model Number = 1242
-        if (jcalc .eq. 1242) then
-c         First call PGA value for non-linear part of the site amplification model
-          call S02_ESHM2020_Craton ( mag, rupdist, 0.0, period2, lnY, iflag )
-          PGAHR = exp(lnY-6.89)
-c         Next call ESHM2020 for hard rock (Vs30=3000m/s)
-          call S02_ESHM2020_Craton ( mag, rupdist, specT, period2, lnYHR, iflag )
-c         Now call for site amplification model
-          call S34_NGAEast_SiteAmp (vs, PGAHR, specT, lnsiteAmp, iflag)
-          lnY = lnYHR + lnsiteAmp
-          attenname = 'ESHM(2020), Craton, with S20 and H20'
-        endif
 
 c--------NGA-East 2018 Models with Ramos-Sepulveda et al. 2024 Adjustments
 c      Model Numbers 7301 - 7317
