@@ -8375,6 +8375,14 @@ C     Set mb values for interface and slab cases
 
 
 
+c  ******* Allen (2022) Far-field North Australian Craton Model *******
+c     Model Number = 1239
+      if ( jcalc .eq. 1239 ) then
+         call S02_Allen_2022 ( mag, disthypo, vs, depth, specT, period2, lnY,
+     1                         sigma, phi, tau, iflag )
+         attenname = 'Allen (2022), Far-field North Australian Craton'
+      endif
+
 c  ******* ESHM 2020 Craton Model *******
 c     Model Number = 1241
       if ( jcalc .eq. 1241 ) then

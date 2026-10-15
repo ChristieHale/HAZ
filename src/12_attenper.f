@@ -2435,9 +2435,15 @@ C     Model Numbers = 675-676
 
 
 
-c------------Added by Milad Jahed Orang February 26
-c ******* ESHM2020 Craton for 2023 NSHA *******
+c ******* Allen (2022) Far-field North Australian Craton *******
+c     Model Number = 1239
+      if ( jcalc .eq. 1239 ) then
+        anper = 20
+        minaper = 0.1
+        maxaper = 10.0
+      endif
 
+c ******* Weatherill and Cotton (2020) ESHM20 Craton *******
 c     Model Number = 1241
       if ( jcalc .eq. 1241 ) then
         anper = 23

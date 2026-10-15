@@ -13013,12 +13013,13 @@ C     Compute HW Factor.
       return
       end
 
-c----------------------------------------------------------------------
-c----------- *** ESHM (2020) Craton ****-----------------------------
-c---------- Written by Milad Jahed Orang --- February 26------------------
-C   This model is develoed based ESHM2020 Craton for the NSHA2023
-C   following procedures described in Kotha et al (2020))
-C   Coefficients are from Table 1 of Weatherill and Cotton (2020), Bull Earthquake Eng 18:6119-6148
+c ---------------------------------------------------------------------
+C     *** Weatherill and Cotton (2020), ESHM20 Craton ***
+C   Weatherill, G. and F. Cotton (2020). A ground motion logic tree for seismic
+C     hazard analysis in the stable cratonic region of Europe: regionalisation,
+C     model selection and development of a scaled backbone approach,
+C     Bull Earthquake Eng 18:6119-6148
+C   Coefficients are from Table 1 of Weatherill and Cotton (2020)
 C     Notes:
 C        Median for the reference hard-rock condition, VS30 = 3000 m/s
 C           (use jcalc 1242 to add the Stewart et al. 2020 / Hashash et al. 2020
@@ -13173,6 +13174,259 @@ C     Convert ground motion to units of gals
       lnY = lnY + 6.89
 
       period1 = specT
+      period2 = period1
+
+      return
+      end
+
+c ---------------------------------------------------------------------
+C     *** Allen (2022), Far-field North Australian Craton ***
+C   Allen, T. I. (2022). A far-field ground-motion model for the North
+C     Australian Craton from plate-margin earthquakes, Bull. Seismol. Soc. Am.
+C     112, 1041-1059
+C   Coefficients are from Table 1 of Allen (2022)
+C     Notes:
+C        Developed for sites in the North Australian Craton from
+C           subduction interface and intraslab earthquakes in the Banda Sea
+C        Applicable range: M <= 8.0, 500 km <= Rhypo <= 1500 km
+C        Distance metric is Rhypo; also depends on the hypocentral depth
+C           (truncated to 10 - 500 km, as recommended in the paper)
+C        Site term is defined for 220 <= VS30 <= 800 m/s
+C        Defined for PGV (specT = -1), PGA, and 0.1 - 10 sec
+C        Sigma for PGA includes the lambda_PGA term (Table 1, Eq. 10)
+c ---------------------------------------------------------------------
+
+      subroutine S02_Allen_2022 ( m, Rhyp, vs, Zhyp, specT, period2, lnY,
+     1                            sigma, phiT, tauT, iflag )
+
+      implicit none
+
+      integer MAXPER
+      parameter (MAXPER=22)
+      real period(MAXPER), c0(MAXPER), c1(MAXPER), c2(MAXPER), c3(MAXPER)
+      real c4(MAXPER), d0(MAXPER), d1(MAXPER), d2(MAXPER), d3(MAXPER)
+      real n0(MAXPER), s0(MAXPER), s1(MAXPER)
+      real tau(MAXPER), phi(MAXPER), sig(MAXPER)
+      integer count1, count2, iflag, nPer, i
+      real c0T, c1T, c2T, c3T, c4T, d0T, d1T, d2T, d3T
+      real n0T, s0T, s1T, tauT, phiT, sigT
+      real specT, period1, period2, lnY, sigma
+      real m, Rhyp, vs, Zhyp, Rx, hz
+      real fR, fM, fD, fN, fS
+
+      data period / -1.0, 0.0, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4,
+     1              0.5, 0.6, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5,
+     2              3.0, 4.0, 5.0, 6.0, 7.5, 10.0 /
+      data c0 / 5.1394, -4.5508, -5.3000, -5.2557, -5.1597, -5.0958, -4.9242,
+     1          -4.2365, -1.6262, 0.1424, 1.8210, 3.4777, 4.7348, 5.6353,
+     2          6.0524, 5.7973, 5.4552, 4.8483, 4.1446, 3.4946, 2.8095,
+     3          2.0278 /
+      data c1 / 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
+     1          -0.0213, -0.0192, -0.0670, -0.1674, -0.2088, -0.1776, -0.2334,
+     2          -0.3545, -0.3619, -0.3484, -0.3590, -0.3549, -0.3247, -0.3034,
+     3          -0.3459 /
+      data c2 / 1.9713, 1.6129, 1.4672, 1.4638, 1.4603, 1.4502, 1.4988,
+     1          1.6047, 1.6542, 1.7420, 1.9003, 1.9943, 2.1150, 2.2245,
+     2          2.4366, 2.4976, 2.5378, 2.6446, 2.7324, 2.7833, 2.7654,
+     3          2.7722 /
+      data c3 / -2.6644, -0.4923, 0.0000, 0.0456, 0.0284, -0.0069, -0.0897,
+     1          -0.3716, -1.4501, -2.2296, -3.0099, -3.8107, -4.4348, -4.8971,
+     2          -5.2236, -5.2934, -5.3066, -5.2890, -5.1969, -5.1162, -5.0636,
+     3          -5.0168 /
+      data c4 / -7.336, -10.167, -10.513, -10.580, -10.382, -10.080, -9.920,
+     1          -9.728, -8.792, -7.931, -6.912, -6.044, -5.403, -4.781,
+     2          -4.348, -4.005, -3.734, -3.656, -3.636, -3.547, -3.453,
+     3          -3.368 /
+      data d0 / 5.2107, 4.8787, 4.3555, 5.7681, 6.0008, 6.0464, 6.5203,
+     1          6.1641, 6.7588, 5.3677, 4.4379, 4.8745, 5.2371, 5.9873,
+     2          5.0004, 5.0432, 5.0210, 5.0015, 5.0599, 4.6695, 4.7249,
+     3          5.0737 /
+      data d1 / -1.8808, -2.5207, -2.7260, -2.9707, -3.0078, -3.0019, -3.0348,
+     1          -2.8040, -2.7780, -2.4344, -2.0824, -1.9619, -1.8821, -1.9196,
+     2          -1.5450, -1.4210, -1.3028, -1.1239, -1.0292, -0.9160, -0.8061,
+     3          -0.7276 /
+      data d2 / 9.459, 12.070, 12.699, 14.147, 14.372, 14.338, 14.583,
+     1          13.533, 13.581, 11.765, 10.083, 9.702, 9.451, 9.800,
+     2          7.960, 7.407, 6.860, 6.057, 5.628, 5.042, 4.540,
+     3          4.187 /
+      data d3 / -13.949, -16.388, -16.557, -19.169, -19.594, -19.567, -20.160,
+     1          -18.818, -19.326, -16.380, -13.980, -13.938, -13.950, -14.879,
+     2          -12.217, -11.637, -11.007, -10.102, -9.653, -8.744, -8.204,
+     3          -7.966 /
+      data n0 / -1.0181, -1.3651, -2.6602, -1.2049, -1.2446, -1.3811, -1.4749,
+     1          -1.5512, -1.0315, -1.1632, -1.0232, -1.0307, -0.8072, -0.9129,
+     2          -0.6695, -0.6849, -0.6495, -0.4710, -0.5199, -0.5526, -0.5132,
+     3          -0.2645 /
+      data s0 / -0.5880, -1.0254, -1.0022, -0.9190, -0.8846, -0.8669, -0.7987,
+     1          -0.7893, -0.6889, -0.6341, -0.7019, -0.6230, -0.5700, -0.5587,
+     2          -0.4756, -0.4486, -0.4330, -0.3915, -0.4377, -0.4253, -0.4327,
+     3          -0.4564 /
+      data s1 / 0.2536, 0.4008, 0.4258, 0.4239, 0.4066, 0.3822, 0.3619,
+     1          0.3403, 0.3084, 0.2919, 0.2781, 0.2654, 0.2509, 0.2342,
+     2          0.2230, 0.2183, 0.2095, 0.2042, 0.1985, 0.1910, 0.1820,
+     3          0.1736 /
+      data tau / 0.6361, 0.7066, 0.7532, 0.7578, 0.7568, 0.7436, 0.7172,
+     1           0.7019, 0.7046, 0.6765, 0.6455, 0.6146, 0.6223, 0.6233,
+     2           0.5910, 0.5689, 0.5618, 0.6152, 0.6352, 0.6207, 0.5969,
+     3           0.5880 /
+      data phi / 0.4883, 0.5094, 0.5038, 0.5252, 0.5343, 0.5291, 0.5286,
+     1           0.5499, 0.5530, 0.5214, 0.4849, 0.4532, 0.4257, 0.4387,
+     2           0.4394, 0.4162, 0.4033, 0.3843, 0.3917, 0.4018, 0.4066,
+     3           0.4185 /
+      data sig / 0.8019, 0.9118, 0.9061, 0.9220, 0.9264, 0.9127, 0.8910,
+     1           0.8917, 0.8957, 0.8541, 0.8073, 0.7636, 0.7540, 0.7622,
+     2           0.7365, 0.7049, 0.6915, 0.7254, 0.7463, 0.7394, 0.7222,
+     3           0.7217 /
+
+C Find the requested spectral period and corresponding coefficients
+      nPer = 22
+
+C First check for the PGV case (i.e., specT=-1.0)
+      if (specT .eq. -1.0) then
+         period1 = period(1)
+         c0T  = c0(1)
+         c1T  = c1(1)
+         c2T  = c2(1)
+         c3T  = c3(1)
+         c4T  = c4(1)
+         d0T  = d0(1)
+         d1T  = d1(1)
+         d2T  = d2(1)
+         d3T  = d3(1)
+         n0T  = n0(1)
+         s0T  = s0(1)
+         s1T  = s1(1)
+         tauT = tau(1)
+         phiT = phi(1)
+         sigT = sig(1)
+         goto 1011
+
+C Check for the PGA case (i.e., specT=0.0)
+      elseif (specT .eq. 0.0) then
+         period1 = period(2)
+         c0T  = c0(2)
+         c1T  = c1(2)
+         c2T  = c2(2)
+         c3T  = c3(2)
+         c4T  = c4(2)
+         d0T  = d0(2)
+         d1T  = d1(2)
+         d2T  = d2(2)
+         d3T  = d3(2)
+         n0T  = n0(2)
+         s0T  = s0(2)
+         s1T  = s1(2)
+         tauT = tau(2)
+         phiT = phi(2)
+         sigT = sig(2)
+         goto 1011
+
+      elseif (specT .gt. 0.0) then
+C Now loop over the spectral period range of the attenuation relationship.
+         do i=3,nper-1
+            if (specT .ge. period(i) .and. specT .le. period(i+1) ) then
+               count1 = i
+               count2 = i+1
+               goto 1020
+            endif
+         enddo
+      endif
+
+C Selected spectral period is outside range defined by attenuaton model.
+      write (*,*)
+      write (*,*) 'Allen (2022) Far-field North Australian Craton'
+      write (*,*) 'attenuation model is not defined for a '
+      write (*,*) ' spectral period of: '
+      write (*,'(a10,f10.5)') ' Period = ',specT
+      write (*,*) 'This spectral period is outside the defined'
+      write (*,*) 'period range in the code or beyond the range'
+      write (*,*) 'of spectral periods for interpolation.'
+      write (*,*) 'Please check the input file.'
+      write (*,*)
+      stop 99
+
+C Interpolate the coefficients for the requested spectral period.
+ 1020 call S24_interp (period(count1),period(count2),c0(count1),c0(count2),
+     +             specT,c0T,iflag)
+      call S24_interp (period(count1),period(count2),c1(count1),c1(count2),
+     +             specT,c1T,iflag)
+      call S24_interp (period(count1),period(count2),c2(count1),c2(count2),
+     +             specT,c2T,iflag)
+      call S24_interp (period(count1),period(count2),c3(count1),c3(count2),
+     +             specT,c3T,iflag)
+      call S24_interp (period(count1),period(count2),c4(count1),c4(count2),
+     +             specT,c4T,iflag)
+      call S24_interp (period(count1),period(count2),d0(count1),d0(count2),
+     +             specT,d0T,iflag)
+      call S24_interp (period(count1),period(count2),d1(count1),d1(count2),
+     +             specT,d1T,iflag)
+      call S24_interp (period(count1),period(count2),d2(count1),d2(count2),
+     +             specT,d2T,iflag)
+      call S24_interp (period(count1),period(count2),d3(count1),d3(count2),
+     +             specT,d3T,iflag)
+      call S24_interp (period(count1),period(count2),n0(count1),n0(count2),
+     +             specT,n0T,iflag)
+      call S24_interp (period(count1),period(count2),s0(count1),s0(count2),
+     +             specT,s0T,iflag)
+      call S24_interp (period(count1),period(count2),s1(count1),s1(count2),
+     +             specT,s1T,iflag)
+      call S24_interp (period(count1),period(count2),tau(count1),tau(count2),
+     +             specT,tauT,iflag)
+      call S24_interp (period(count1),period(count2),phi(count1),phi(count2),
+     +             specT,phiT,iflag)
+      call S24_interp (period(count1),period(count2),sig(count1),sig(count2),
+     +             specT,sigT,iflag)
+
+ 1011 period1 = specT
+
+C     Check that VS30 is within the range of the site term
+      if (vs .lt. 220.0 .or. vs .gt. 800.0) then
+         write (*,*)
+         write (*,*) 'Allen (2022) Far-field North Australian Craton'
+         write (*,*) 'site term is not defined for a VS30 of: '
+         write (*,'(a10,f10.2)') ' VS30   = ', vs
+         write (*,*) 'The model is defined for 220 <= VS30 <= 800 m/s.'
+         write (*,*) 'Please check the input file.'
+         write (*,*)
+         stop 99
+      endif
+
+C     Hinge distance (km)
+      Rx = 600.0
+
+C     Distance scaling term (Eq. 2)
+      if (Rhyp .le. Rx) then
+         fR = c3T*alog10(Rhyp)
+      else
+         fR = c3T*alog10(Rx) + c4T*(alog10(Rhyp) - alog10(Rx))
+      endif
+
+C     Magnitude scaling term (Eq. 3)
+      fM = c0T + c1T*(m - 6.0)**2 + c2T*(m - 6.0)
+
+C     Hypocentral depth scaling term (Eq. 4), with the depth truncated to 10 - 500 km
+      hz = min(max(Zhyp, 10.0), 500.0)
+      fD = d0T + d1T*alog10(hz)**3 + d2T*alog10(hz)**2 + d3T*alog10(hz)
+
+C     Near-source distance correction (Eq. 5)
+      if (Rhyp .le. Rx) then
+         fN = n0T*(alog10(Rhyp) - alog10(Rx))
+      else
+         fN = 0.0
+      endif
+
+C     Site term (Eq. 6)
+      fS = s0T + s1T/(alog10(vs) - alog10(150.0))
+
+C     Median ground motion (Eq. 1), in natural log units of g (cm/s for PGV)
+      lnY = fR + fM + fD + fN + fS
+
+C     Total standard deviation (Table 1)
+      sigma = sigT
+
+C     Convert ground motion to units of gals.
+      lnY = lnY + 6.89
+
       period2 = period1
 
       return
