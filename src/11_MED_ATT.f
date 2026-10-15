@@ -8375,6 +8375,21 @@ C     Set mb values for interface and slab cases
 
 
 
+c  ******* Somerville et al. (2009) Models, Australia *******
+c     Model Number = 1235 (Cratonic)
+      if ( jcalc .eq. 1235 ) then
+         call S02_Somerville_2009_Craton ( mag, jbdist, specT, period2, lnY,
+     1                                     sigma, iflag )
+         attenname = 'Somerville et al. (2009), Australia, Cratonic'
+      endif
+
+c     Model Number = 1236 (Non-Cratonic)
+      if ( jcalc .eq. 1236 ) then
+         call S02_Somerville_2009_NonCraton ( mag, jbdist, specT, period2, lnY,
+     1                                        sigma, iflag )
+         attenname = 'Somerville et al. (2009), Australia, Non-Cratonic'
+      endif
+
 c  ******* Bayless and Somerville (2024) Model, Australia *******
 c     Model Number = 1237 (Cratonic)
 c     Model Number = 1240 (Non-Cratonic)

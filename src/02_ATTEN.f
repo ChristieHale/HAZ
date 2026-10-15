@@ -14152,3 +14152,351 @@ C     for PGA and spectral acceleration, and from m/s to cm/s for PGV
 
       return
       end
+
+c ---------------------------------------------------------------------
+C     *** Somerville et al. (2009), Australia, Cratonic ***
+C   Somerville, P., R. Graves, N. Collins, S. G. Song, S. Ni, and P. Cummins
+C     (2009). Source and ground motion models for Australian earthquakes,
+C     Proceedings of the 2009 Annual Conference of the Australian Earthquake
+C     Engineering Society, Newcastle
+C   Coefficients are from Table 4 of Somerville et al. (2009)
+C     Notes:
+C        This is the Yilgarn Craton model, applicable to the Yilgarn
+C           Craton and, to first order, other cratonic regions of Australia
+C        Rock site conditions (VS30 = 865 m/s)
+C        Distance metric is RJB (0 - 500 km)
+C        Developed for 5.0 <= M <= 7.5
+C        Defined for PGV (specT = -1), PGA, and 0.01 - 10 sec
+c ---------------------------------------------------------------------
+
+      subroutine S02_Somerville_2009_Craton ( m, Rjb, specT, period2, lnY,
+     1                                 sigma, iflag )
+
+      implicit none
+
+      integer MAXPER
+      parameter (MAXPER=24)
+      real period(MAXPER), c1(MAXPER), c2(MAXPER), c3(MAXPER), c4(MAXPER)
+      real c5(MAXPER), c6(MAXPER), c7(MAXPER), c8(MAXPER), sig(MAXPER)
+      integer count1, count2, iflag, nPer, i
+      real c1T, c2T, c3T, c4T, c5T, c6T, c7T, c8T, sigT
+      real specT, period1, period2, lnY, sigma, m, Rjb
+      real m1, r1, h, R, Rref
+
+      data period / -1.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.15,
+     1              0.2, 0.25, 0.3003, 0.4, 0.5, 0.75, 1.0, 1.4993, 2.0, 3.0003,
+     2              4.0, 5.0, 7.5019, 10.0 /
+      data c1 / 5.23440, 1.54560, 1.55510, 2.33800, 2.48090, 2.31450, 2.26860, 1.97070,
+     1          1.71030, 1.52310, 1.36830, 1.40180, 1.45000, 1.44150, 1.40380, 1.50840,
+     2          2.10630, 2.55790, 2.39600, 0.96040, 0.12190, -0.84240, -1.92260, -2.60330 /
+      data c2 / 1.58530, 1.45650, 1.46380, 1.38060, 1.37540, 1.60250, 1.55840, 1.68030,
+     1          1.75070, 1.69160, 1.57940, 1.28940, 1.04630, 0.92820, 0.69160, 0.75800,
+     2          0.38180, -0.84270, -1.39950, -0.46120, -0.06980, 0.53160, 0.63760, 0.59060 /
+      data c3 / -1.01540, -1.11510, -1.11460, -1.22970, -1.17620, -1.12600, -1.07340, -1.01540,
+     1          -0.99330, -0.96310, -0.94720, -0.94410, -0.94880, -0.91830, -0.91010, -0.99010,
+     2          -1.08680, -0.81810, -0.70440, -0.70450, -0.75910, -0.79600, -0.81900, -0.80940 /
+      data c4 / 0.21400, 0.16640, 0.16620, 0.18010, 0.17120, 0.17150, 0.14710, 0.14560,
+     1          0.13820, 0.13330, 0.13640, 0.14360, 0.14760, 0.11320, 0.13480, 0.11260,
+     2          0.07950, 0.07650, 0.06770, 0.06450, 0.08490, 0.10330, 0.14550, 0.16090 /
+      data c5 / -0.00341, -0.00567, -0.00568, -0.00467, -0.00542, -0.00629, -0.00709, -0.00737,
+     1          -0.00746, -0.00713, -0.00677, -0.00617, -0.00581, -0.00576, -0.00557, -0.00458,
+     2          -0.00406, -0.00220, -0.00366, -0.00429, -0.00374, -0.00180, -0.00066, -0.00106 /
+      data c6 / -0.91610, -1.04900, -1.04840, -1.39850, -1.38720, -1.27910, -1.08910, -0.91930,
+     1          -0.78140, -0.67330, -0.62690, -0.67070, -0.68700, -0.59520, -0.62390, -0.69040,
+     2          -0.90340, -1.35320, -0.90860, -0.51190, -0.41450, -0.62130, -0.75740, -0.68550 /
+      data c7 / 1.12980, 1.05530, 1.05850, 0.95990, 0.96930, 1.07040, 1.10750, 1.18290,
+     1          1.29390, 1.22430, 1.17760, 1.05610, 0.94040, 0.86280, 0.71230, 0.68590,
+     2          0.61850, -0.25440, -0.64320, -0.16430, 0.12350, 0.53680, 0.69020, 0.70350 /
+      data c8 / 0.14810, 0.20000, 0.20140, 0.20130, 0.19280, 0.23560, 0.20670, 0.22170,
+     1          0.23790, 0.21020, 0.18950, 0.14590, 0.11040, 0.04060, 0.00620, -0.05630,
+     2          -0.18250, -0.46660, -0.59600, -0.46310, -0.39250, -0.27570, -0.23290, -0.22910 /
+      data sig / 0.6606, 0.5513, 0.5512, 0.5510, 0.5508, 0.5509, 0.5510, 0.5514,
+     1           0.5529, 0.5544, 0.5558, 0.5583, 0.5602, 0.5614, 0.5636, 0.5878,
+     2           0.6817, 0.8514, 0.8646, 0.8424, 0.8225, 0.8088, 0.7808, 0.7624 /
+
+C Find the requested spectral period and corresponding coefficients
+      nPer = 24
+
+C First check for the PGV case (i.e., specT=-1.0)
+      if (specT .eq. -1.0) then
+         period1 = period(1)
+         c1T  = c1(1)
+         c2T  = c2(1)
+         c3T  = c3(1)
+         c4T  = c4(1)
+         c5T  = c5(1)
+         c6T  = c6(1)
+         c7T  = c7(1)
+         c8T  = c8(1)
+         sigT = sig(1)
+         goto 1011
+
+C Check for the PGA case (i.e., specT=0.0)
+      elseif (specT .eq. 0.0) then
+         period1 = period(2)
+         c1T  = c1(2)
+         c2T  = c2(2)
+         c3T  = c3(2)
+         c4T  = c4(2)
+         c5T  = c5(2)
+         c6T  = c6(2)
+         c7T  = c7(2)
+         c8T  = c8(2)
+         sigT = sig(2)
+         goto 1011
+
+      elseif (specT .gt. 0.0) then
+C Now loop over the spectral period range of the attenuation relationship.
+         do i=3,nper-1
+            if (specT .ge. period(i) .and. specT .le. period(i+1) ) then
+               count1 = i
+               count2 = i+1
+               goto 1020
+            endif
+         enddo
+      endif
+
+C Selected spectral period is outside range defined by attenuaton model.
+      write (*,*)
+      write (*,*) 'Somerville et al. (2009) Australia, Cratonic'
+      write (*,*) 'attenuation model is not defined for a '
+      write (*,*) ' spectral period of: '
+      write (*,'(a10,f10.5)') ' Period = ',specT
+      write (*,*) 'This spectral period is outside the defined'
+      write (*,*) 'period range in the code or beyond the range'
+      write (*,*) 'of spectral periods for interpolation.'
+      write (*,*) 'Please check the input file.'
+      write (*,*)
+      stop 99
+
+C Interpolate the coefficients for the requested spectral period.
+ 1020 call S24_interp (period(count1),period(count2),c1(count1),c1(count2),
+     +             specT,c1T,iflag)
+      call S24_interp (period(count1),period(count2),c2(count1),c2(count2),
+     +             specT,c2T,iflag)
+      call S24_interp (period(count1),period(count2),c3(count1),c3(count2),
+     +             specT,c3T,iflag)
+      call S24_interp (period(count1),period(count2),c4(count1),c4(count2),
+     +             specT,c4T,iflag)
+      call S24_interp (period(count1),period(count2),c5(count1),c5(count2),
+     +             specT,c5T,iflag)
+      call S24_interp (period(count1),period(count2),c6(count1),c6(count2),
+     +             specT,c6T,iflag)
+      call S24_interp (period(count1),period(count2),c7(count1),c7(count2),
+     +             specT,c7T,iflag)
+      call S24_interp (period(count1),period(count2),c8(count1),c8(count2),
+     +             specT,c8T,iflag)
+      call S24_interp (period(count1),period(count2),sig(count1),sig(count2),
+     +             specT,sigT,iflag)
+
+ 1011 period1 = specT
+
+C     Set constants (Table 2)
+      m1 = 6.4
+      r1 = 50.0
+      h = 6.0
+
+      R = sqrt(Rjb**2 + h**2)
+      Rref = sqrt(r1**2 + h**2)
+
+C     Median ground motion (Table 2), in natural log units of g (cm/s for PGV)
+      lnY = c1T + c4T*(m - m1)*alog(R) + c5T*Rjb + c8T*(8.5 - m)**2
+
+C     Magnitude scaling
+      if (m .lt. m1) then
+         lnY = lnY + c2T*(m - m1)
+      else
+         lnY = lnY + c7T*(m - m1)
+      endif
+
+C     Distance scaling
+      if (Rjb .lt. r1) then
+         lnY = lnY + c3T*alog(R)
+      else
+         lnY = lnY + c3T*alog(Rref) + c6T*(alog(R) - alog(Rref))
+      endif
+
+      sigma = sigT
+
+C     Convert ground motion to units of gals.
+      lnY = lnY + 6.89
+
+      period2 = period1
+
+      return
+      end
+
+
+c ---------------------------------------------------------------------
+C     *** Somerville et al. (2009), Australia, Non-Cratonic ***
+C   Somerville, P., R. Graves, N. Collins, S. G. Song, S. Ni, and P. Cummins
+C     (2009). Source and ground motion models for Australian earthquakes,
+C     Proceedings of the 2009 Annual Conference of the Australian Earthquake
+C     Engineering Society, Newcastle
+C   Coefficients are from Table 3 of Somerville et al. (2009)
+C     Notes:
+C        This is the non-cratonic model, applicable, to first order, to
+C           non-cratonic regions of Australia
+C        Rock site conditions (VS30 = 865 m/s)
+C        Distance metric is RJB (0 - 500 km)
+C        Developed for 5.0 <= M <= 7.5
+C        Defined for PGV (specT = -1), PGA, and 0.01 - 10 sec
+c ---------------------------------------------------------------------
+
+      subroutine S02_Somerville_2009_NonCraton ( m, Rjb, specT, period2, lnY,
+     1                                 sigma, iflag )
+
+      implicit none
+
+      integer MAXPER
+      parameter (MAXPER=24)
+      real period(MAXPER), c1(MAXPER), c2(MAXPER), c3(MAXPER), c4(MAXPER)
+      real c5(MAXPER), c6(MAXPER), c7(MAXPER), c8(MAXPER), sig(MAXPER)
+      integer count1, count2, iflag, nPer, i
+      real c1T, c2T, c3T, c4T, c5T, c6T, c7T, c8T, sigT
+      real specT, period1, period2, lnY, sigma, m, Rjb
+      real m1, r1, h, R, Rref
+
+      data period / -1.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.15,
+     1              0.2, 0.25, 0.3003, 0.4, 0.5, 0.75, 1.0, 1.4993, 2.0, 3.0003,
+     2              4.0, 5.0, 7.5019, 10.0 /
+      data c1 / 5.07090, 1.03780, 1.05360, 1.05680, 1.13530, 1.30000, 1.47680, 1.70220,
+     1          1.65720, 1.94440, 1.82720, 1.74380, 1.80560, 1.88750, 2.03760, 1.93060,
+     2          1.60380, 0.47740, -0.25810, -0.96360, -1.46140, -1.61160, -2.35310, -3.26140 /
+      data c2 / 0.52780, -0.03970, -0.04190, -0.03920, -0.04790, -0.07020, -0.09310, -0.05160,
+     1          0.15080, -0.09620, -0.06230, -0.02530, -0.27020, -0.37820, -0.79590, -0.80280,
+     2          -0.47800, 0.90960, 1.37770, 1.14690, 1.07950, 0.74860, 0.35190, 0.69730 /
+      data c3 / -0.85740, -0.79430, -0.79390, -0.79680, -0.80920, -0.83150, -0.83330, -0.80720,
+     1          -0.77590, -0.75000, -0.73430, -0.72480, -0.73190, -0.70580, -0.69730, -0.74510,
+     2          -0.86950, -1.02440, -1.01000, -0.88530, -0.80490, -0.78100, -0.64340, -0.62760 /
+      data c4 / 0.17700, 0.14450, 0.14450, 0.14550, 0.15000, 0.15920, 0.15600, 0.14560,
+     1          0.13100, 0.11670, 0.11940, 0.11950, 0.13490, 0.09960, 0.11470, 0.11220,
+     2          0.07320, 0.11060, 0.10310, 0.10380, 0.10960, 0.09650, 0.09590, 0.12920 /
+      data c5 / -0.00501, -0.00618, -0.00619, -0.00617, -0.00610, -0.00599, -0.00606, -0.00655,
+     1          -0.00708, -0.00698, -0.00677, -0.00646, -0.00606, -0.00589, -0.00565, -0.00503,
+     2          -0.00569, -0.00652, -0.00539, -0.00478, -0.00395, -0.00307, -0.00138, -0.00155 /
+      data c6 / -0.61190, -0.72540, -0.72660, -0.73230, -0.76410, -0.82850, -0.86740, -0.87690,
+     1          -0.77830, -0.69490, -0.64380, -0.63740, -0.66440, -0.58770, -0.59990, -0.59460,
+     2          -0.41590, -0.19000, -0.27340, -0.40420, -0.46040, -0.46490, -0.68260, -0.61980 /
+      data c7 / 0.80660, -0.03590, -0.03940, -0.03930, -0.05710, -0.09810, -0.12740, -0.10970,
+     1          0.01690, -0.13320, -0.09570, -0.06250, -0.17470, -0.24420, -0.48670, -0.50120,
+     2          0.06360, 1.09610, 1.50330, 1.54130, 1.41960, 1.24090, 0.92880, 1.01050 /
+      data c8 / -0.03800, -0.09730, -0.09740, -0.09600, -0.09210, -0.08530, -0.09130, -0.08690,
+     1          -0.05980, -0.12530, -0.11920, -0.11650, -0.14340, -0.21890, -0.29690, -0.34990,
+     2          -0.33730, -0.10660, -0.04530, -0.11020, -0.14700, -0.22170, -0.31230, -0.24550 /
+      data sig / 0.6417, 0.5685, 0.5684, 0.5684, 0.5681, 0.5676, 0.5670, 0.5663,
+     1           0.5659, 0.5659, 0.5669, 0.5678, 0.5708, 0.5697, 0.5739, 0.5876,
+     2           0.6269, 0.7517, 0.8036, 0.8219, 0.8212, 0.8240, 0.7957, 0.7602 /
+
+C Find the requested spectral period and corresponding coefficients
+      nPer = 24
+
+C First check for the PGV case (i.e., specT=-1.0)
+      if (specT .eq. -1.0) then
+         period1 = period(1)
+         c1T  = c1(1)
+         c2T  = c2(1)
+         c3T  = c3(1)
+         c4T  = c4(1)
+         c5T  = c5(1)
+         c6T  = c6(1)
+         c7T  = c7(1)
+         c8T  = c8(1)
+         sigT = sig(1)
+         goto 1011
+
+C Check for the PGA case (i.e., specT=0.0)
+      elseif (specT .eq. 0.0) then
+         period1 = period(2)
+         c1T  = c1(2)
+         c2T  = c2(2)
+         c3T  = c3(2)
+         c4T  = c4(2)
+         c5T  = c5(2)
+         c6T  = c6(2)
+         c7T  = c7(2)
+         c8T  = c8(2)
+         sigT = sig(2)
+         goto 1011
+
+      elseif (specT .gt. 0.0) then
+C Now loop over the spectral period range of the attenuation relationship.
+         do i=3,nper-1
+            if (specT .ge. period(i) .and. specT .le. period(i+1) ) then
+               count1 = i
+               count2 = i+1
+               goto 1020
+            endif
+         enddo
+      endif
+
+C Selected spectral period is outside range defined by attenuaton model.
+      write (*,*)
+      write (*,*) 'Somerville et al. (2009) Australia, Non-Cratonic'
+      write (*,*) 'attenuation model is not defined for a '
+      write (*,*) ' spectral period of: '
+      write (*,'(a10,f10.5)') ' Period = ',specT
+      write (*,*) 'This spectral period is outside the defined'
+      write (*,*) 'period range in the code or beyond the range'
+      write (*,*) 'of spectral periods for interpolation.'
+      write (*,*) 'Please check the input file.'
+      write (*,*)
+      stop 99
+
+C Interpolate the coefficients for the requested spectral period.
+ 1020 call S24_interp (period(count1),period(count2),c1(count1),c1(count2),
+     +             specT,c1T,iflag)
+      call S24_interp (period(count1),period(count2),c2(count1),c2(count2),
+     +             specT,c2T,iflag)
+      call S24_interp (period(count1),period(count2),c3(count1),c3(count2),
+     +             specT,c3T,iflag)
+      call S24_interp (period(count1),period(count2),c4(count1),c4(count2),
+     +             specT,c4T,iflag)
+      call S24_interp (period(count1),period(count2),c5(count1),c5(count2),
+     +             specT,c5T,iflag)
+      call S24_interp (period(count1),period(count2),c6(count1),c6(count2),
+     +             specT,c6T,iflag)
+      call S24_interp (period(count1),period(count2),c7(count1),c7(count2),
+     +             specT,c7T,iflag)
+      call S24_interp (period(count1),period(count2),c8(count1),c8(count2),
+     +             specT,c8T,iflag)
+      call S24_interp (period(count1),period(count2),sig(count1),sig(count2),
+     +             specT,sigT,iflag)
+
+ 1011 period1 = specT
+
+C     Set constants (Table 2)
+      m1 = 6.4
+      r1 = 50.0
+      h = 6.0
+
+      R = sqrt(Rjb**2 + h**2)
+      Rref = sqrt(r1**2 + h**2)
+
+C     Median ground motion (Table 2), in natural log units of g (cm/s for PGV)
+      lnY = c1T + c4T*(m - m1)*alog(R) + c5T*Rjb + c8T*(8.5 - m)**2
+
+C     Magnitude scaling
+      if (m .lt. m1) then
+         lnY = lnY + c2T*(m - m1)
+      else
+         lnY = lnY + c7T*(m - m1)
+      endif
+
+C     Distance scaling
+      if (Rjb .lt. r1) then
+         lnY = lnY + c3T*alog(R)
+      else
+         lnY = lnY + c3T*alog(Rref) + c6T*(alog(R) - alog(Rref))
+      endif
+
+      sigma = sigT
+
+C     Convert ground motion to units of gals.
+      lnY = lnY + 6.89
+
+      period2 = period1
+
+      return
+      end
+

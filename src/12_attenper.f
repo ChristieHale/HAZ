@@ -2435,6 +2435,14 @@ C     Model Numbers = 675-676
 
 
 
+c ******* Somerville et al. (2009), Australia *******
+c     Model Numbers = 1235 (Cratonic), 1236 (Non-Cratonic)
+      if ( jcalc .eq. 1235 .or. jcalc .eq. 1236 ) then
+        anper = 22
+        minaper = 0.01
+        maxaper = 10.0
+      endif
+
 c ******* Bayless and Somerville (2024), Australia *******
 c     Model Numbers = 1237 (Cratonic), 1240 (Non-Cratonic)
       if ( jcalc .eq. 1237 .or. jcalc .eq. 1240 ) then
