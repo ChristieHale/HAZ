@@ -14511,8 +14511,8 @@ C     the coefficients from the model author's spreadsheet (20120821) instead
 C     of Tables 7 and 8 of the report; these reproduce the unit test data in
 C     Appendix I of the report
 C     Notes:
-C        Separate models for shallow (hypocentral depth < 10 km) and deep
-C           (hypocentral depth >= 10 km) earthquakes
+C        Separate coefficients for shallow (hypocentral depth < 10 km) and
+C           deep (hypocentral depth >= 10 km) earthquakes
 C        Average southeastern Australia site conditions (VS30 of about 820 m/s)
 C        Distance metric is Rrup
 C        Applicable range: 4.0 <= M <= 7.5, Rrup < 400 km
@@ -14524,79 +14524,108 @@ c ---------------------------------------------------------------------
 
       implicit none
 
-      real m, Rrup, hypoDepth, specT, period2, lnY, sigma
-      integer iflag
+      integer MAXPER
+      parameter (MAXPER=19)
+      real period(MAXPER), c0(MAXPER,2), c1(MAXPER,2), c2(MAXPER,2)
+      real c3(MAXPER,2), c4(MAXPER,2), c5(MAXPER,2), c6(MAXPER,2)
+      real c7(MAXPER,2), c8(MAXPER,2), c9(MAXPER,2), c10(MAXPER,2)
+      real c11(MAXPER,2), sig(MAXPER,2)
+      integer count1, count2, iflag, nPer, i, idep
+      real c0T, c1T, c2T, c3T, c4T, c5T, c6T, c7T, c8T, c9T, c10T, c11T, sigT
+      real specT, period1, period2, lnY, sigma, m, Rrup, hypoDepth
+      real Mref, r1, r2, g0, g1, g2, logY
 
+      data period / 0.0, 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25,
+     1              0.3, 0.4, 0.5, 0.75, 1.0, 1.4999, 2.0, 3.0003, 4.0 /
+
+C     Shallow earthquakes (hypocentral depth < 10 km)
+      data (c0(i,1),i=1,MAXPER) / 3.2586, 3.2586, 3.3683, 3.5107, 3.5450, 3.5160, 3.4584,
+     1                            3.2956, 3.1362, 2.9980, 2.8721, 2.6231, 2.3981, 1.9437,
+     2                            1.6160, 1.1925, 0.9286, 0.5738, 0.3395 /
+      data (c1(i,1),i=1,MAXPER) / 0.5054, 0.5054, 0.4962, 0.4705, 0.4768, 0.4919, 0.5147,
+     1                            0.5804, 0.6416, 0.6920, 0.7358, 0.8177, 0.8888, 1.0108,
+     2                            1.0784, 1.1020, 1.0737, 1.0109, 0.9536 /
+      data (c2(i,1),i=1,MAXPER) / -0.0693, -0.0693, -0.0620, -0.0599, -0.0628, -0.0679, -0.0728,
+     1                            -0.0819, -0.0916, -0.1014, -0.1101, -0.1239, -0.1339, -0.1471,
+     2                            -0.1514, -0.1423, -0.1263, -0.0953, -0.0712 /
+      data (c3(i,1),i=1,MAXPER) / -1.8386, -1.8386, -1.8078, -1.8523, -1.8368, -1.8063, -1.7739,
+     1                            -1.7002, -1.6475, -1.6149, -1.5934, -1.5654, -1.5476, -1.5267,
+     2                            -1.5217, -1.5395, -1.5639, -1.5879, -1.6036 /
+      data (c4(i,1),i=1,MAXPER) / 0.1580, 0.1580, 0.1363, 0.1423, 0.1403, 0.1424, 0.1423,
+     1                            0.1314, 0.1272, 0.1304, 0.1351, 0.1398, 0.1399, 0.1404,
+     2                            0.1445, 0.1604, 0.1751, 0.1848, 0.1884 /
+      data (c5(i,1),i=1,MAXPER) / 1.2466, 1.2466, 1.2475, 1.4336, 1.4595, 1.4184, 1.3746,
+     1                            1.2855, 1.2140, 1.1595, 1.1206, 1.0823, 1.0705, 1.0501,
+     2                            1.0252, 1.0087, 1.0164, 1.0479, 1.0706 /
+      data (c6(i,1),i=1,MAXPER) / -0.2045, -0.2045, -0.4862, -0.5445, -0.4889, -0.3407, -0.2152,
+     1                            -0.0627, 0.0715, 0.2078, 0.3188, 0.4330, 0.4658, 0.4756,
+     2                            0.4812, 0.5036, 0.5219, 0.5137, 0.5091 /
+      data (c7(i,1),i=1,MAXPER) / -0.0441, -0.0441, 0.0163, 0.0148, -0.0106, -0.0428, -0.0611,
+     1                            -0.0672, -0.0804, -0.1046, -0.1244, -0.1271, -0.1056, -0.0924,
+     2                            -0.1235, -0.1592, -0.1638, -0.1574, -0.1580 /
+      data (c8(i,1),i=1,MAXPER) / -5.1081, -5.1081, -4.7019, -4.9778, -5.1162, -4.9874, -4.8360,
+     1                            -4.6640, -4.6829, -4.8054, -4.8545, -4.4665, -3.8200, -3.4220,
+     2                            -4.0450, -4.2474, -3.7546, -3.7826, -4.2008 /
+      data (c9(i,1),i=1,MAXPER) / -2.8612, -2.8612, -2.8631, -2.8492, -3.0724, -3.2518, -3.2860,
+     1                            -3.1221, -2.9347, -2.7890, -2.6803, -2.5395, -2.4577, -2.4062,
+     2                            -2.4381, -2.4984, -2.5266, -2.5356, -2.5644 /
+      data (c10(i,1),i=1,MAXPER) / 0.2520, 0.2520, 0.2482, 0.2495, 0.3025, 0.3059, 0.2677,
+     1                             0.1562, 0.1074, 0.1130, 0.1307, 0.1358, 0.1156, 0.1245,
+     2                             0.1887, 0.2558, 0.2664, 0.2682, 0.2860 /
+      data (c11(i,1),i=1,MAXPER) / -0.6911, -0.6911, -0.9393, -1.0706, -1.2294, -0.7602, -0.1890,
+     1                             0.6327, 1.0339, 1.1911, 1.1665, 0.6517, -0.0632, -1.0127,
+     2                             -1.0992, -0.6929, -0.2953, -0.0570, -0.1061 /
+      data (sig(i,1),i=1,MAXPER) / 0.4120, 0.4120, 0.4383, 0.4310, 0.3994, 0.3805, 0.3720,
+     1                             0.3637, 0.3594, 0.3575, 0.3558, 0.3544, 0.3522, 0.3495,
+     2                             0.3487, 0.3492, 0.3484, 0.3467, 0.3457 /
+
+C     Deep earthquakes (hypocentral depth >= 10 km)
+      data (c0(i,2),i=1,MAXPER) / 3.3830, 3.3830, 3.5565, 3.7069, 3.7388, 3.6718, 3.5788,
+     1                            3.3779, 3.1826, 3.0040, 2.8429, 2.5501, 2.3035, 1.8219,
+     2                            1.4789, 1.0706, 0.8407, 0.5344, 0.3202 /
+      data (c1(i,2),i=1,MAXPER) / 0.6034, 0.6034, 0.5904, 0.5281, 0.5462, 0.5844, 0.6266,
+     1                            0.7276, 0.8205, 0.8987, 0.9634, 1.0648, 1.1393, 1.2480,
+     2                            1.2965, 1.2744, 1.2059, 1.0959, 1.0250 /
+      data (c2(i,2),i=1,MAXPER) / -0.0905, -0.0905, -0.0856, -0.0843, -0.0835, -0.0893, -0.0972,
+     1                            -0.1128, -0.1283, -0.1432, -0.1556, -0.1718, -0.1807, -0.1860,
+     2                            -0.1818, -0.1611, -0.1390, -0.1054, -0.0845 /
+      data (c3(i,2),i=1,MAXPER) / -1.9289, -1.9289, -1.9394, -1.9729, -1.9369, -1.8879, -1.8478,
+     1                            -1.7796, -1.7325, -1.7010, -1.6791, -1.6521, -1.6367, -1.6145,
+     2                            -1.6031, -1.6256, -1.6639, -1.7074, -1.7307 /
+      data (c4(i,2),i=1,MAXPER) / 0.1754, 0.1754, 0.1621, 0.1855, 0.1650, 0.1578, 0.1573,
+     1                            0.1476, 0.1443, 0.1483, 0.1537, 0.1594, 0.1603, 0.1579,
+     2                            0.1567, 0.1725, 0.1938, 0.2178, 0.2291 /
+      data (c5(i,2),i=1,MAXPER) / 1.1140, 1.1140, 1.1954, 1.1653, 1.4281, 1.5010, 1.5125,
+     1                            1.6277, 1.6481, 1.5729, 1.4901, 1.4364, 1.4725, 1.6026,
+     2                            1.6826, 1.7006, 1.6575, 1.5980, 1.5703 /
+      data (c6(i,2),i=1,MAXPER) / -0.1822, -0.1822, -0.4561, -0.4548, -0.4399, -0.2986, -0.1629,
+     1                            -0.0090, 0.1229, 0.2598, 0.3689, 0.4608, 0.4626, 0.4530,
+     2                            0.4868, 0.5261, 0.5385, 0.5975, 0.6403 /
+      data (c7(i,2),i=1,MAXPER) / -0.0126, -0.0126, 0.0338, 0.0016, 0.0012, -0.0335, -0.0579,
+     1                            -0.0451, -0.0430, -0.0632, -0.0843, -0.0955, -0.0833, -0.0765,
+     2                            -0.1014, -0.1349, -0.1475, -0.1670, -0.1765 /
+      data (c8(i,2),i=1,MAXPER) / -4.6974, -4.6974, -4.8588, -4.6835, -4.3352, -4.1895, -4.0552,
+     1                            -3.6274, -3.4854, -3.5975, -3.7509, -3.8563, -3.7902, -3.6309,
+     2                            -3.6122, -3.7229, -3.7642, -3.1596, -2.7375 /
+      data (c9(i,2),i=1,MAXPER) / -3.1490, -3.1490, -3.0919, -3.2849, -3.4777, -3.5529, -3.5179,
+     1                            -3.2850, -3.0590, -2.8838, -2.7493, -2.5597, -2.4365, -2.3807,
+     2                            -2.4713, -2.5644, -2.5814, -2.7062, -2.8114 /
+      data (c10(i,2),i=1,MAXPER) / 0.3152, 0.3152, 0.3012, 0.3938, 0.4168, 0.3990, 0.3471,
+     1                             0.1821, 0.1035, 0.1047, 0.1261, 0.1346, 0.1113, 0.1155,
+     2                             0.1820, 0.2480, 0.2597, 0.3113, 0.3526 /
+      data (c11(i,2),i=1,MAXPER) / -0.7242, -0.7242, -1.1518, -1.2871, -1.0867, -1.2308, -1.1589,
+     1                             -0.1896, 0.1635, -0.1385, -0.5928, -1.1806, -1.4107, -1.4951,
+     2                             -1.4247, -0.9947, -0.5854, -0.5753, -0.8547 /
+      data (sig(i,2),i=1,MAXPER) / 0.3653, 0.3653, 0.3897, 0.3840, 0.3558, 0.3392, 0.3323,
+     1                             0.3271, 0.3247, 0.3246, 0.3245, 0.3248, 0.3225, 0.3188,
+     2                             0.3180, 0.3161, 0.3142, 0.3113, 0.3097 /
+
+C Select the coefficients for shallow (idep = 1) or deep (idep = 2) earthquakes
       if (hypoDepth .lt. 10.0) then
-         call S02_Allen_2012_Shallow ( m, Rrup, specT, period2, lnY, sigma, iflag )
+         idep = 1
       else
-         call S02_Allen_2012_Deep ( m, Rrup, specT, period2, lnY, sigma, iflag )
+         idep = 2
       endif
-
-      return
-      end
-
-c ---------------------------------------------------------------------
-C     *** Allen (2012), Southeastern Australia, Shallow (h < 10 km) ***
-C   See S02_Allen_2012 for the reference and notes
-c ---------------------------------------------------------------------
-
-      subroutine S02_Allen_2012_Shallow ( m, Rrup, specT, period2, lnY,
-     1                            sigma, iflag )
-
-      implicit none
-
-      integer MAXPER
-      parameter (MAXPER=19)
-      real period(MAXPER), c0(MAXPER), c1(MAXPER), c2(MAXPER), c3(MAXPER)
-      real c4(MAXPER), c5(MAXPER), c6(MAXPER), c7(MAXPER), c8(MAXPER)
-      real c9(MAXPER), c10(MAXPER), c11(MAXPER), sig(MAXPER)
-      integer count1, count2, iflag, nPer, i
-      real c0T, c1T, c2T, c3T, c4T, c5T, c6T, c7T, c8T, c9T, c10T, c11T, sigT
-      real specT, period1, period2, lnY, sigma, m, Rrup
-      real Mref, r1, r2, g0, g1, g2, logY
-
-      data period / 0.0, 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25,
-     1              0.3, 0.4, 0.5, 0.75, 1.0, 1.4999, 2.0, 3.0003, 4.0 /
-      data c0 / 3.2586, 3.2586, 3.3683, 3.5107, 3.5450, 3.5160, 3.4584, 3.2956,
-     1          3.1362, 2.9980, 2.8721, 2.6231, 2.3981, 1.9437, 1.6160, 1.1925,
-     2          0.9286, 0.5738, 0.3395 /
-      data c1 / 0.5054, 0.5054, 0.4962, 0.4705, 0.4768, 0.4919, 0.5147, 0.5804,
-     1          0.6416, 0.6920, 0.7358, 0.8177, 0.8888, 1.0108, 1.0784, 1.1020,
-     2          1.0737, 1.0109, 0.9536 /
-      data c2 / -0.0693, -0.0693, -0.0620, -0.0599, -0.0628, -0.0679, -0.0728, -0.0819,
-     1          -0.0916, -0.1014, -0.1101, -0.1239, -0.1339, -0.1471, -0.1514, -0.1423,
-     2          -0.1263, -0.0953, -0.0712 /
-      data c3 / -1.8386, -1.8386, -1.8078, -1.8523, -1.8368, -1.8063, -1.7739, -1.7002,
-     1          -1.6475, -1.6149, -1.5934, -1.5654, -1.5476, -1.5267, -1.5217, -1.5395,
-     2          -1.5639, -1.5879, -1.6036 /
-      data c4 / 0.1580, 0.1580, 0.1363, 0.1423, 0.1403, 0.1424, 0.1423, 0.1314,
-     1          0.1272, 0.1304, 0.1351, 0.1398, 0.1399, 0.1404, 0.1445, 0.1604,
-     2          0.1751, 0.1848, 0.1884 /
-      data c5 / 1.2466, 1.2466, 1.2475, 1.4336, 1.4595, 1.4184, 1.3746, 1.2855,
-     1          1.2140, 1.1595, 1.1206, 1.0823, 1.0705, 1.0501, 1.0252, 1.0087,
-     2          1.0164, 1.0479, 1.0706 /
-      data c6 / -0.2045, -0.2045, -0.4862, -0.5445, -0.4889, -0.3407, -0.2152, -0.0627,
-     1          0.0715, 0.2078, 0.3188, 0.4330, 0.4658, 0.4756, 0.4812, 0.5036,
-     2          0.5219, 0.5137, 0.5091 /
-      data c7 / -0.0441, -0.0441, 0.0163, 0.0148, -0.0106, -0.0428, -0.0611, -0.0672,
-     1          -0.0804, -0.1046, -0.1244, -0.1271, -0.1056, -0.0924, -0.1235, -0.1592,
-     2          -0.1638, -0.1574, -0.1580 /
-      data c8 / -5.1081, -5.1081, -4.7019, -4.9778, -5.1162, -4.9874, -4.8360, -4.6640,
-     1          -4.6829, -4.8054, -4.8545, -4.4665, -3.8200, -3.4220, -4.0450, -4.2474,
-     2          -3.7546, -3.7826, -4.2008 /
-      data c9 / -2.8612, -2.8612, -2.8631, -2.8492, -3.0724, -3.2518, -3.2860, -3.1221,
-     1          -2.9347, -2.7890, -2.6803, -2.5395, -2.4577, -2.4062, -2.4381, -2.4984,
-     2          -2.5266, -2.5356, -2.5644 /
-      data c10 / 0.2520, 0.2520, 0.2482, 0.2495, 0.3025, 0.3059, 0.2677, 0.1562,
-     1           0.1074, 0.1130, 0.1307, 0.1358, 0.1156, 0.1245, 0.1887, 0.2558,
-     2           0.2664, 0.2682, 0.2860 /
-      data c11 / -0.6911, -0.6911, -0.9393, -1.0706, -1.2294, -0.7602, -0.1890, 0.6327,
-     1           1.0339, 1.1911, 1.1665, 0.6517, -0.0632, -1.0127, -1.0992, -0.6929,
-     2           -0.2953, -0.0570, -0.1061 /
-      data sig / 0.4120, 0.4120, 0.4383, 0.4310, 0.3994, 0.3805, 0.3720, 0.3637,
-     1           0.3594, 0.3575, 0.3558, 0.3544, 0.3522, 0.3495, 0.3487, 0.3492,
-     2           0.3484, 0.3467, 0.3457 /
 
 C Find the requested spectral period and corresponding coefficients
       nPer = 19
@@ -14604,19 +14633,19 @@ C Find the requested spectral period and corresponding coefficients
 C First check for the PGA case (i.e., specT=0.0)
       if (specT .eq. 0.0) then
          period1 = period(1)
-         c0T  = c0(1)
-         c1T  = c1(1)
-         c2T  = c2(1)
-         c3T  = c3(1)
-         c4T  = c4(1)
-         c5T  = c5(1)
-         c6T  = c6(1)
-         c7T  = c7(1)
-         c8T  = c8(1)
-         c9T  = c9(1)
-         c10T = c10(1)
-         c11T = c11(1)
-         sigT = sig(1)
+         c0T  = c0(1,idep)
+         c1T  = c1(1,idep)
+         c2T  = c2(1,idep)
+         c3T  = c3(1,idep)
+         c4T  = c4(1,idep)
+         c5T  = c5(1,idep)
+         c6T  = c6(1,idep)
+         c7T  = c7(1,idep)
+         c8T  = c8(1,idep)
+         c9T  = c9(1,idep)
+         c10T = c10(1,idep)
+         c11T = c11(1,idep)
+         sigT = sig(1,idep)
          goto 1011
 
       elseif (specT .gt. 0.0) then
@@ -14632,7 +14661,7 @@ C Now loop over the spectral period range of the attenuation relationship.
 
 C Selected spectral period is outside range defined by attenuaton model.
       write (*,*)
-      write (*,*) 'Allen (2012) Southeastern Australia, Shallow (h < 10 km)'
+      write (*,*) 'Allen (2012) Southeastern Australia'
       write (*,*) 'attenuation model is not defined for a '
       write (*,*) ' spectral period of: '
       write (*,'(a10,f10.5)') ' Period = ',specT
@@ -14644,31 +14673,31 @@ C Selected spectral period is outside range defined by attenuaton model.
       stop 99
 
 C Interpolate the coefficients for the requested spectral period.
- 1020 call S24_interp (period(count1),period(count2),c0(count1),c0(count2),
+ 1020 call S24_interp (period(count1),period(count2),c0(count1,idep),c0(count2,idep),
      +             specT,c0T,iflag)
-      call S24_interp (period(count1),period(count2),c1(count1),c1(count2),
+      call S24_interp (period(count1),period(count2),c1(count1,idep),c1(count2,idep),
      +             specT,c1T,iflag)
-      call S24_interp (period(count1),period(count2),c2(count1),c2(count2),
+      call S24_interp (period(count1),period(count2),c2(count1,idep),c2(count2,idep),
      +             specT,c2T,iflag)
-      call S24_interp (period(count1),period(count2),c3(count1),c3(count2),
+      call S24_interp (period(count1),period(count2),c3(count1,idep),c3(count2,idep),
      +             specT,c3T,iflag)
-      call S24_interp (period(count1),period(count2),c4(count1),c4(count2),
+      call S24_interp (period(count1),period(count2),c4(count1,idep),c4(count2,idep),
      +             specT,c4T,iflag)
-      call S24_interp (period(count1),period(count2),c5(count1),c5(count2),
+      call S24_interp (period(count1),period(count2),c5(count1,idep),c5(count2,idep),
      +             specT,c5T,iflag)
-      call S24_interp (period(count1),period(count2),c6(count1),c6(count2),
+      call S24_interp (period(count1),period(count2),c6(count1,idep),c6(count2,idep),
      +             specT,c6T,iflag)
-      call S24_interp (period(count1),period(count2),c7(count1),c7(count2),
+      call S24_interp (period(count1),period(count2),c7(count1,idep),c7(count2,idep),
      +             specT,c7T,iflag)
-      call S24_interp (period(count1),period(count2),c8(count1),c8(count2),
+      call S24_interp (period(count1),period(count2),c8(count1,idep),c8(count2,idep),
      +             specT,c8T,iflag)
-      call S24_interp (period(count1),period(count2),c9(count1),c9(count2),
+      call S24_interp (period(count1),period(count2),c9(count1,idep),c9(count2,idep),
      +             specT,c9T,iflag)
-      call S24_interp (period(count1),period(count2),c10(count1),c10(count2),
+      call S24_interp (period(count1),period(count2),c10(count1,idep),c10(count2,idep),
      +             specT,c10T,iflag)
-      call S24_interp (period(count1),period(count2),c11(count1),c11(count2),
+      call S24_interp (period(count1),period(count2),c11(count1,idep),c11(count2,idep),
      +             specT,c11T,iflag)
-      call S24_interp (period(count1),period(count2),sig(count1),sig(count2),
+      call S24_interp (period(count1),period(count2),sig(count1,idep),sig(count2,idep),
      +             specT,sigT,iflag)
 
  1011 period1 = specT
@@ -14698,168 +14727,3 @@ C     Convert sigma from log10 to natural log units
 
       return
       end
-
-
-c ---------------------------------------------------------------------
-C     *** Allen (2012), Southeastern Australia, Deep (h >= 10 km) ***
-C   See S02_Allen_2012 for the reference and notes
-c ---------------------------------------------------------------------
-
-      subroutine S02_Allen_2012_Deep ( m, Rrup, specT, period2, lnY,
-     1                            sigma, iflag )
-
-      implicit none
-
-      integer MAXPER
-      parameter (MAXPER=19)
-      real period(MAXPER), c0(MAXPER), c1(MAXPER), c2(MAXPER), c3(MAXPER)
-      real c4(MAXPER), c5(MAXPER), c6(MAXPER), c7(MAXPER), c8(MAXPER)
-      real c9(MAXPER), c10(MAXPER), c11(MAXPER), sig(MAXPER)
-      integer count1, count2, iflag, nPer, i
-      real c0T, c1T, c2T, c3T, c4T, c5T, c6T, c7T, c8T, c9T, c10T, c11T, sigT
-      real specT, period1, period2, lnY, sigma, m, Rrup
-      real Mref, r1, r2, g0, g1, g2, logY
-
-      data period / 0.0, 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.15, 0.2, 0.25,
-     1              0.3, 0.4, 0.5, 0.75, 1.0, 1.4999, 2.0, 3.0003, 4.0 /
-      data c0 / 3.3830, 3.3830, 3.5565, 3.7069, 3.7388, 3.6718, 3.5788, 3.3779,
-     1          3.1826, 3.0040, 2.8429, 2.5501, 2.3035, 1.8219, 1.4789, 1.0706,
-     2          0.8407, 0.5344, 0.3202 /
-      data c1 / 0.6034, 0.6034, 0.5904, 0.5281, 0.5462, 0.5844, 0.6266, 0.7276,
-     1          0.8205, 0.8987, 0.9634, 1.0648, 1.1393, 1.2480, 1.2965, 1.2744,
-     2          1.2059, 1.0959, 1.0250 /
-      data c2 / -0.0905, -0.0905, -0.0856, -0.0843, -0.0835, -0.0893, -0.0972, -0.1128,
-     1          -0.1283, -0.1432, -0.1556, -0.1718, -0.1807, -0.1860, -0.1818, -0.1611,
-     2          -0.1390, -0.1054, -0.0845 /
-      data c3 / -1.9289, -1.9289, -1.9394, -1.9729, -1.9369, -1.8879, -1.8478, -1.7796,
-     1          -1.7325, -1.7010, -1.6791, -1.6521, -1.6367, -1.6145, -1.6031, -1.6256,
-     2          -1.6639, -1.7074, -1.7307 /
-      data c4 / 0.1754, 0.1754, 0.1621, 0.1855, 0.1650, 0.1578, 0.1573, 0.1476,
-     1          0.1443, 0.1483, 0.1537, 0.1594, 0.1603, 0.1579, 0.1567, 0.1725,
-     2          0.1938, 0.2178, 0.2291 /
-      data c5 / 1.1140, 1.1140, 1.1954, 1.1653, 1.4281, 1.5010, 1.5125, 1.6277,
-     1          1.6481, 1.5729, 1.4901, 1.4364, 1.4725, 1.6026, 1.6826, 1.7006,
-     2          1.6575, 1.5980, 1.5703 /
-      data c6 / -0.1822, -0.1822, -0.4561, -0.4548, -0.4399, -0.2986, -0.1629, -0.0090,
-     1          0.1229, 0.2598, 0.3689, 0.4608, 0.4626, 0.4530, 0.4868, 0.5261,
-     2          0.5385, 0.5975, 0.6403 /
-      data c7 / -0.0126, -0.0126, 0.0338, 0.0016, 0.0012, -0.0335, -0.0579, -0.0451,
-     1          -0.0430, -0.0632, -0.0843, -0.0955, -0.0833, -0.0765, -0.1014, -0.1349,
-     2          -0.1475, -0.1670, -0.1765 /
-      data c8 / -4.6974, -4.6974, -4.8588, -4.6835, -4.3352, -4.1895, -4.0552, -3.6274,
-     1          -3.4854, -3.5975, -3.7509, -3.8563, -3.7902, -3.6309, -3.6122, -3.7229,
-     2          -3.7642, -3.1596, -2.7375 /
-      data c9 / -3.1490, -3.1490, -3.0919, -3.2849, -3.4777, -3.5529, -3.5179, -3.2850,
-     1          -3.0590, -2.8838, -2.7493, -2.5597, -2.4365, -2.3807, -2.4713, -2.5644,
-     2          -2.5814, -2.7062, -2.8114 /
-      data c10 / 0.3152, 0.3152, 0.3012, 0.3938, 0.4168, 0.3990, 0.3471, 0.1821,
-     1           0.1035, 0.1047, 0.1261, 0.1346, 0.1113, 0.1155, 0.1820, 0.2480,
-     2           0.2597, 0.3113, 0.3526 /
-      data c11 / -0.7242, -0.7242, -1.1518, -1.2871, -1.0867, -1.2308, -1.1589, -0.1896,
-     1           0.1635, -0.1385, -0.5928, -1.1806, -1.4107, -1.4951, -1.4247, -0.9947,
-     2           -0.5854, -0.5753, -0.8547 /
-      data sig / 0.3653, 0.3653, 0.3897, 0.3840, 0.3558, 0.3392, 0.3323, 0.3271,
-     1           0.3247, 0.3246, 0.3245, 0.3248, 0.3225, 0.3188, 0.3180, 0.3161,
-     2           0.3142, 0.3113, 0.3097 /
-
-C Find the requested spectral period and corresponding coefficients
-      nPer = 19
-
-C First check for the PGA case (i.e., specT=0.0)
-      if (specT .eq. 0.0) then
-         period1 = period(1)
-         c0T  = c0(1)
-         c1T  = c1(1)
-         c2T  = c2(1)
-         c3T  = c3(1)
-         c4T  = c4(1)
-         c5T  = c5(1)
-         c6T  = c6(1)
-         c7T  = c7(1)
-         c8T  = c8(1)
-         c9T  = c9(1)
-         c10T = c10(1)
-         c11T = c11(1)
-         sigT = sig(1)
-         goto 1011
-
-      elseif (specT .gt. 0.0) then
-C Now loop over the spectral period range of the attenuation relationship.
-         do i=2,nper-1
-            if (specT .ge. period(i) .and. specT .le. period(i+1) ) then
-               count1 = i
-               count2 = i+1
-               goto 1020
-            endif
-         enddo
-      endif
-
-C Selected spectral period is outside range defined by attenuaton model.
-      write (*,*)
-      write (*,*) 'Allen (2012) Southeastern Australia, Deep (h >= 10 km)'
-      write (*,*) 'attenuation model is not defined for a '
-      write (*,*) ' spectral period of: '
-      write (*,'(a10,f10.5)') ' Period = ',specT
-      write (*,*) 'This spectral period is outside the defined'
-      write (*,*) 'period range in the code or beyond the range'
-      write (*,*) 'of spectral periods for interpolation.'
-      write (*,*) 'Please check the input file.'
-      write (*,*)
-      stop 99
-
-C Interpolate the coefficients for the requested spectral period.
- 1020 call S24_interp (period(count1),period(count2),c0(count1),c0(count2),
-     +             specT,c0T,iflag)
-      call S24_interp (period(count1),period(count2),c1(count1),c1(count2),
-     +             specT,c1T,iflag)
-      call S24_interp (period(count1),period(count2),c2(count1),c2(count2),
-     +             specT,c2T,iflag)
-      call S24_interp (period(count1),period(count2),c3(count1),c3(count2),
-     +             specT,c3T,iflag)
-      call S24_interp (period(count1),period(count2),c4(count1),c4(count2),
-     +             specT,c4T,iflag)
-      call S24_interp (period(count1),period(count2),c5(count1),c5(count2),
-     +             specT,c5T,iflag)
-      call S24_interp (period(count1),period(count2),c6(count1),c6(count2),
-     +             specT,c6T,iflag)
-      call S24_interp (period(count1),period(count2),c7(count1),c7(count2),
-     +             specT,c7T,iflag)
-      call S24_interp (period(count1),period(count2),c8(count1),c8(count2),
-     +             specT,c8T,iflag)
-      call S24_interp (period(count1),period(count2),c9(count1),c9(count2),
-     +             specT,c9T,iflag)
-      call S24_interp (period(count1),period(count2),c10(count1),c10(count2),
-     +             specT,c10T,iflag)
-      call S24_interp (period(count1),period(count2),c11(count1),c11(count2),
-     +             specT,c11T,iflag)
-      call S24_interp (period(count1),period(count2),sig(count1),sig(count2),
-     +             specT,sigT,iflag)
-
- 1011 period1 = specT
-
-C     Magnitude-dependent hinge distances (Eq. 19)
-      Mref = m - 4.0
-      r1 = 90.0 + c8T*Mref
-      r2 = 150.0 + c11T*Mref
-
-C     Geometrical attenuation terms (Eq. 19)
-      g0 = alog10(sqrt(min(Rrup, r1)**2 + (1.0 + c5T*Mref)**2))
-      g1 = max(alog10(Rrup/r1), 0.0)
-      g2 = max(alog10(Rrup/r2), 0.0)
-
-C     Median ground motion (Eq. 18), in log10 units of cm/s**2
-      logY = c0T + c1T*Mref + c2T*Mref**2 + (c3T + c4T*Mref)*g0
-     1       + (c6T + c7T*Mref)*g1 + (c9T + c10T*Mref)*g2
-
-C     Convert from log10(cm/s**2) to natural log units of g (g = 980.665 cm/s**2)
-C     and then to units of gals
-      lnY = logY*alog(10.0) - alog(980.665) + 6.89
-
-C     Convert sigma from log10 to natural log units
-      sigma = sigT*alog(10.0)
-
-      period2 = period1
-
-      return
-      end
-
