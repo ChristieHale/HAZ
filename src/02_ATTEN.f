@@ -13987,3 +13987,168 @@ C     Total standard deviation (Eq. 6)
 
       return
       end
+
+c ---------------------------------------------------------------------
+C     *** Drouet (2015), Brazil ***
+C   Unpublished stochastic model for Brazil by S. Drouet, developed with the
+C     method of Drouet, S. and F. Cotton (2015). Regional stochastic GMPEs in
+C     low-seismicity areas: scaling and aleatory variability analysis -
+C     application to the French Alps, Bull. Seismol. Soc. Am. 105, 1883-1902
+C     (functional form is Eq. 8 of that paper)
+C   Coefficients are from the OpenQuake implementation (DrouetBrazil2015)
+C     Notes:
+C        Distance metric is RJB
+C        Simulated range: 3.0 <= M <= 8.0, epicentral distance 1 - 250 km
+C        Defined for PGV (specT = -1), PGA, and 0.01 - 3 sec
+C        The model is for ground motion in m/s**2 (m/s for PGV)
+c ---------------------------------------------------------------------
+
+      subroutine S02_Drouet_2015_Brazil ( m, Rjb, specT, period2, lnY,
+     1                                    sigma, phiT, tauT, iflag )
+
+      implicit none
+
+      integer MAXPER
+      parameter (MAXPER=22)
+      real period(MAXPER), c1(MAXPER), c2(MAXPER), c3(MAXPER), c4(MAXPER)
+      real c5(MAXPER), c6(MAXPER), c7(MAXPER), phi(MAXPER), tau(MAXPER)
+      integer count1, count2, iflag, nPer, i
+      real c1T, c2T, c3T, c4T, c5T, c6T, c7T, phiT, tauT
+      real specT, period1, period2, lnY, sigma, m, Rjb
+
+      data period / -1.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.075, 0.1, 0.15, 0.2,
+     1              0.25, 0.3, 0.4, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 3.0 /
+      data c1 / 0.457169, 2.575109, 2.586201, 2.717172, 2.930319, 3.156209,
+     1          3.268731, 3.352582, 3.455122, 3.456514, 3.480893, 3.358985,
+     2          3.115954, 2.806835, 2.837393, 2.383076, 2.070536, 1.944386,
+     3          1.973072, 1.747518, 1.667278, 1.292331 /
+      data c2 / 0.230048, -0.243140, -0.242271, -0.261739, -0.236637, -0.266436,
+     1          -0.189794, -0.164010, -0.203575, -0.169395, -0.155262, -0.255601,
+     2          -0.237559, -0.340296, -0.355473, -0.374649, -0.263869, -0.196142,
+     3          -0.160616, -0.129961, -0.083863, 0.312316 /
+      data c3 / -0.140795, -0.155164, -0.154703, -0.152580, -0.147729, -0.143032,
+     1          -0.140262, -0.140254, -0.148680, -0.160434, -0.168476, -0.194574,
+     2          -0.215762, -0.250121, -0.271003, -0.298428, -0.303220, -0.309115,
+     3          -0.313180, -0.320672, -0.319818, -0.263539 /
+      data c4 / -1.785544, -1.807995, -1.808695, -1.859646, -1.831982, -1.915769,
+     1          -1.753521, -1.691894, -1.708867, -1.607720, -1.646459, -1.669187,
+     2          -1.451276, -1.418762, -1.453916, -1.472297, -1.410898, -1.408815,
+     3          -1.493457, -1.400692, -1.405853, -1.464213 /
+      data c5 / 0.162408, 0.156084, 0.156141, 0.160136, 0.155727, 0.162181,
+     1          0.144779, 0.140095, 0.139700, 0.131021, 0.132556, 0.134462,
+     2          0.114182, 0.114054, 0.111753, 0.117984, 0.117144, 0.116519,
+     3          0.122469, 0.116855, 0.114769, 0.130085 /
+      data c6 / 7.201555, 7.629410, 7.623170, 7.773640, 7.918015, 8.224381,
+     1          7.767181, 7.428414, 7.707583, 7.274064, 7.424609, 7.753731,
+     2          7.212529, 6.837724, 7.298391, 7.051676, 6.815268, 6.904435,
+     3          7.427893, 7.143261, 7.128404, 6.416692 /
+      data c7 / -0.002832, -0.003996, -0.004020, -0.004048, -0.004558, -0.004350,
+     1          -0.004910, -0.004756, -0.004261, -0.004025, -0.002871, -0.002732,
+     2          -0.003761, -0.004081, -0.003037, -0.002899, -0.003307, -0.003017,
+     3          -0.002316, -0.003402, -0.003174, -0.002621 /
+      data phi / 0.526166, 0.625075, 0.630187, 0.688591, 0.751663, 0.779379,
+     1           0.780218, 0.706350, 0.652456, 0.587130, 0.556933, 0.533650,
+     2           0.526336, 0.519411, 0.512892, 0.507442, 0.511352, 0.511909,
+     3           0.511871, 0.508641, 0.505025, 0.512370 /
+      data tau / 0.393025, 0.481226, 0.481707, 0.486003, 0.490319, 0.498289,
+     1           0.497182, 0.493511, 0.490010, 0.480912, 0.462619, 0.458696,
+     2           0.452876, 0.440790, 0.427910, 0.405868, 0.384417, 0.376152,
+     3           0.370833, 0.361738, 0.353357, 0.344082 /
+
+C Find the requested spectral period and corresponding coefficients
+      nPer = 22
+
+C First check for the PGV case (i.e., specT=-1.0)
+      if (specT .eq. -1.0) then
+         period1 = period(1)
+         c1T  = c1(1)
+         c2T  = c2(1)
+         c3T  = c3(1)
+         c4T  = c4(1)
+         c5T  = c5(1)
+         c6T  = c6(1)
+         c7T  = c7(1)
+         phiT = phi(1)
+         tauT = tau(1)
+         goto 1011
+
+C Check for the PGA case (i.e., specT=0.0)
+      elseif (specT .eq. 0.0) then
+         period1 = period(2)
+         c1T  = c1(2)
+         c2T  = c2(2)
+         c3T  = c3(2)
+         c4T  = c4(2)
+         c5T  = c5(2)
+         c6T  = c6(2)
+         c7T  = c7(2)
+         phiT = phi(2)
+         tauT = tau(2)
+         goto 1011
+
+      elseif (specT .gt. 0.0) then
+C Now loop over the spectral period range of the attenuation relationship.
+         do i=3,nper-1
+            if (specT .ge. period(i) .and. specT .le. period(i+1) ) then
+               count1 = i
+               count2 = i+1
+               goto 1020
+            endif
+         enddo
+      endif
+
+C Selected spectral period is outside range defined by attenuaton model.
+      write (*,*)
+      write (*,*) 'Drouet (2015) Brazil'
+      write (*,*) 'attenuation model is not defined for a '
+      write (*,*) ' spectral period of: '
+      write (*,'(a10,f10.5)') ' Period = ',specT
+      write (*,*) 'This spectral period is outside the defined'
+      write (*,*) 'period range in the code or beyond the range'
+      write (*,*) 'of spectral periods for interpolation.'
+      write (*,*) 'Please check the input file.'
+      write (*,*)
+      stop 99
+
+C Interpolate the coefficients for the requested spectral period.
+ 1020 call S24_interp (period(count1),period(count2),c1(count1),c1(count2),
+     +             specT,c1T,iflag)
+      call S24_interp (period(count1),period(count2),c2(count1),c2(count2),
+     +             specT,c2T,iflag)
+      call S24_interp (period(count1),period(count2),c3(count1),c3(count2),
+     +             specT,c3T,iflag)
+      call S24_interp (period(count1),period(count2),c4(count1),c4(count2),
+     +             specT,c4T,iflag)
+      call S24_interp (period(count1),period(count2),c5(count1),c5(count2),
+     +             specT,c5T,iflag)
+      call S24_interp (period(count1),period(count2),c6(count1),c6(count2),
+     +             specT,c6T,iflag)
+      call S24_interp (period(count1),period(count2),c7(count1),c7(count2),
+     +             specT,c7T,iflag)
+      call S24_interp (period(count1),period(count2),phi(count1),phi(count2),
+     +             specT,phiT,iflag)
+      call S24_interp (period(count1),period(count2),tau(count1),tau(count2),
+     +             specT,tauT,iflag)
+
+ 1011 period1 = specT
+
+C     Median ground motion (Eq. 8 of Drouet and Cotton, 2015), in natural log
+C     units of m/s**2 (m/s for PGV)
+      lnY = c1T + c2T*(m - 8.0) + c3T*(m - 8.0)**2
+     1      + (c4T + c5T*m)*alog(sqrt(Rjb**2 + c6T**2)) + c7T*Rjb
+
+C     Total standard deviation
+      sigma = sqrt( phiT**2 + tauT**2 )
+
+C     Convert ground motion to units of gals: from m/s**2 to g (g = 9.80665 m/s**2)
+C     for PGA and spectral acceleration, and from m/s to cm/s for PGV
+      if (specT .eq. -1.0) then
+         lnY = lnY + alog(100.0) + 6.89
+      else
+         lnY = lnY - alog(9.80665) + 6.89
+      endif
+
+      period2 = period1
+
+      return
+      end

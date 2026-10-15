@@ -2443,6 +2443,14 @@ c     Model Numbers = 1237 (Cratonic), 1240 (Non-Cratonic)
         maxaper = 10.0
       endif
 
+c ******* Drouet (2015), Brazil *******
+c     Model Number = 1238
+      if ( jcalc .eq. 1238 ) then
+        anper = 20
+        minaper = 0.01
+        maxaper = 3.0
+      endif
+
 c ******* Allen (2022) Far-field North Australian Craton *******
 c     Model Number = 1239
       if ( jcalc .eq. 1239 ) then

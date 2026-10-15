@@ -8393,6 +8393,14 @@ c     Z1.0 scaling is not applied, as recommended by the model developers
      2                      lnY, sigma, phi, tau, iflag, CratFlag )
       endif
 
+c  ******* Drouet (2015) Model, Brazil *******
+c     Model Number = 1238
+      if ( jcalc .eq. 1238 ) then
+         call S02_Drouet_2015_Brazil ( mag, jbdist, specT, period2, lnY,
+     1                                 sigma, phi, tau, iflag )
+         attenname = 'Drouet (2015), Brazil'
+      endif
+
 c  ******* Allen (2022) Far-field North Australian Craton Model *******
 c     Model Number = 1239
       if ( jcalc .eq. 1239 ) then
