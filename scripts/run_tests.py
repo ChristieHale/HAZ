@@ -171,6 +171,13 @@ def iter_cases(
         "set-3/S3Test3/Approach b2",
     ]
 
+    # Cases whose reference outputs do not exist yet: clustered sequences
+    # (source type 8) are read, but their hazard is added in Phase 2
+    # (docs/Cluster_Source_Spec.md)
+    pending_cases = [
+        "cluster/*/Cluster",
+    ]
+
     pattern_run = r"^Run_\S+\.txt$"
 
     for root, dirnames, fnames in os.walk(path_src):
@@ -184,6 +191,9 @@ def iter_cases(
                 continue
 
             path = pathlib.Path(root).parent
+            if any(path.match(pc) for pc in pending_cases):
+                print("Skipping (pending):", path)
+                continue
             # Check cases with long runtimes
             if not all_cases and any(path.match(lc) for lc in long_cases):
                 print("Skipping:", path)

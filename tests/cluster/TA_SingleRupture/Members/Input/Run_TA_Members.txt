@@ -2,7 +2,7 @@ Source_TA_Members.txt
 45.4                        version of fault file
 30.0  45.0  -100.0  -80.0    min max lat long (grid sources only)
 1000.  1000.                 maxdist (types 1 and 2)
-Cluster test A members: NMS, RFT, NMN as ordinary sources, rate 1, one rupture each
+Cluster test A members: NMS, RFT, NMN, one rupture each, as ordinary sources with rate 1
 1  1                        nProb, nAttenType
 0.0  8  0  0                 period, max epsilon, dir flag, pcflag
 16

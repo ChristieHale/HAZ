@@ -19,8 +19,18 @@ hazard and its disaggregation independently of the HAZ Fortran.
 - **out3:** gives the GMM-weighted values to 4 significant digits.
 - **out4:** gives the disaggregation fractions to 3 significant digits.
 
-The **Cluster** runs (type 8, the same faults, one sequence rate) are added in
-Phases 1 and 2 and are compared against these references.
+Each case also has a **Cluster** run: the same faults as the segments of one
+fault system, as source type 8, with the sequence rate as each member's
+activity rate. Since Phase 1, HAZ reads these runs and stops before the hazard
+calculation, so the test runner skips them (`pending_cases` in
+`scripts/run_tests.py`). Phase 2 adds their reference outputs, which are
+compared against the reference values from the Members runs.
+
+All of the input files are written by `make_inputs.py`; edit it, not the inputs:
+
+```
+python tests/cluster/make_inputs.py tests/cluster
+```
 
 ## Cases
 
@@ -84,6 +94,9 @@ python cluster_reference.py deagg Run.txt --out1 g1.out1 g2.out1 --out4 g1.out4 
 
 # Unit tests
 python -m pytest test_cluster_reference.py
+
+# Reading of source type 8: runs HAZ on the Cluster inputs and on one variant per rule
+HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_reader.py
 ```
 
 **Disaggregation with one GMM.** If a case has a single GMM, the allocation

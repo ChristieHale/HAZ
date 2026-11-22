@@ -151,7 +151,6 @@ HAZ stops with a clear message if any of these fails.
 | Same attenuation type in every member | GMM branches are matched across members |
 | PC method off (`pcflag` = 0) for the periods run | The PC terms are linear in the rate |
 | nWidth = 1, nParamVar = 1, nFtype = 1 per member | Lifted in Phase 5 |
-| At most 10 members per cluster | Storage limit; can be raised |
 
 ### A3.3 Example: the NMS member, 45.4 format
 
@@ -489,3 +488,9 @@ Still open: whether "the disaggregation code" includes the companion UHS_deagg p
   - `scripts/cluster_reference.py` and `scripts/test_cluster_reference.py`.
   - The member runs in `tests/cluster/` (see its README).
   - A fix to `scripts/io_tools.py` `read_out3` for out3 files with more than one period.
+- **Phase 1 (done):**
+  - The 45.4 reader accepts source type 8 and checks the rules in A3.2 (`src/29_readFlt.f`, `src/36_Cluster.f`). Each member is stored as source type 1 with a cluster number (`clusterID`). The older readers stop on type 8.
+  - HAZ writes a summary of the clusters to the screen and log file, then stops before the hazard calculation.
+  - The Cluster runs of tests A and B (`tests/cluster/*/Cluster`), written by `tests/cluster/make_inputs.py`. The test runner skips them until Phase 2 adds their reference outputs.
+  - `scripts/test_cluster_reader.py` runs HAZ on them and on one variant per rule.
+  - There is no fixed limit on the number of members; the Phase 2 storage will be sized when the cluster is reached.

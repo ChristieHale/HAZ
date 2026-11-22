@@ -69,7 +69,12 @@ c     read fault File
      5     segModelFlag, nSegModel, segModelWt1, syn_dip,
      6     syn_zTOR, syn_RupWidth, syn_RX, syn_Ry0, magS7, rateS7,
      7     DistS7, DipS7, mechS7, ncountS7, version, VarXstepFlag, VarYstepFlag,
-     8     distmaxType)
+     8     distmaxType, clusterID)
+
+c     Clustered earthquake sequences (source type 8): summary and checks
+      call S36_ClusterSetup ( nFlt, clusterID, fName, fsys, probAct,
+     1     nParamVar, rateParam, rateParamWt, magRecur, maxMag,
+     2     minMag, nProb, specT, PCflag )
 
 c     Loop Over Number of Sites
       read (13,*,err=2100) nSite

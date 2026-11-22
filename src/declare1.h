@@ -38,7 +38,7 @@ c    Declarations for Main file
      2        attenType(MAX_FLT), iParam, nParamVar(MAX_FLT,MAX_WIDTH),
      3        iMagBin, iDistBin, iEpsBin, nMagBins, nDistBins, nEpsBins,
      4        nPts, iCoor, nXcostBins, nAttenType, vs30_class, foreARc,
-     5        distmaxType(MAX_FLT)
+     5        distmaxType(MAX_FLT), clusterID(MAX_FLT)
       integer fIndex(3,MAX_FLT), iFltWidth, fsys(MAX_FLT), sigflag,
      1        fltDirect(MAX_FLT), synchron(MAX_FLT), synjcalc(MAX_FLT),
      2        nSyn_Case(MAX_FLT), synHWFlag(MAX_FLT,MAX_SYN),

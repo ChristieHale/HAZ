@@ -15,12 +15,12 @@
      5     segModelFlag, nSegModel0, segModelWt1, syn_dip,
      6     syn_zTOR, syn_RupWidth, syn_RX, syn_Ry0, magS7, rateS7,
      7     DistS7, DipS7, mechS7, ncountS7, version, VarXstepFlag,
-     8     VarYstepFlag, distmaxType)
+     8     VarYstepFlag, distmaxType, clusterID)
 
       implicit none
       include 'pfrisk.h'
 
-      integer distmaxType(MAX_FLT), i
+      integer distmaxType(MAX_FLT), clusterID(MAX_FLT), i
       integer synHWFlag(MAX_FLT,MAX_SYN), nsyn_Case(MAX_FLT), nFlt,
      1        synjcalc(MAX_FLT), fltDirect(MAX_FLT), synchron(MAX_FLT),
      2        fIndex(3,MAX_FLT), sourceType(MAX_FLT),
@@ -65,6 +65,12 @@ c     Max distance type for each source (1 or 2). Only the 45.4 format reads it;
 c     sources in older fault files all use max distance type 1.
       do i=1,MAX_FLT
         distmaxType(i) = 1
+      enddo
+
+c     Cluster number of each source (0 = not a member of a clustered sequence).
+c     Clustered sequences (source type 8) are only read in the 45.4 format.
+      do i=1,MAX_FLT
+        clusterID(i) = 0
       enddo
 
       if ( version .eq. 45.1 ) then
@@ -139,7 +145,7 @@ c     sources in older fault files all use max distance type 1.
      5     segModelFlag, nSegModel0, segModelWt1, syn_dip,
      6     syn_zTOR, syn_RupWidth, syn_RX, syn_Ry0, magS7, rateS7,
      7     DistS7, DipS7, mechS7, ncountS7, VarXstepFlag, VarYstepFlag,
-     8     distmaxType)
+     8     distmaxType, clusterID)
       else
         write (*,'( 2x,''Incompatible fault file, use Haz45.4, Haz45.3, Haz45.2, or Haz45.1'')')
         stop 99
@@ -167,12 +173,12 @@ c  --------------------------------------------------------------------
      5     segModelFlag, nSegModel0, segModelWt1, syn_dip,
      6     syn_zTOR, syn_RupWidth, syn_RX, syn_Ry0, magS7, rateS7,
      7     DistS7, DipS7, mechS7, ncountS7, VarXstepFlag, VarYstepFlag,
-     8     distmaxType)
+     8     distmaxType, clusterID)
 
       implicit none
       include 'pfrisk.h'
 
-      integer distmaxType(MAX_FLT)
+      integer distmaxType(MAX_FLT), clusterID(MAX_FLT), nCluster, iFltFirst
       integer synHWFlag(MAX_FLT,MAX_SYN), nsyn_Case(MAX_FLT),
      1        synjcalc(MAX_FLT), fltDirect(MAX_FLT), synchron(MAX_FLT),
      2        fIndex(3,MAX_FLT), nWidth(MAX_FLT), sourceType(MAX_FLT),
@@ -242,6 +248,7 @@ c     Input Fault Parameters
 
       iflt = 0
       ifsystem = 1
+      nCluster = 0
 
       DO iFlt0=1,NFLT
        read (10,'( a80)',err=3003) fName1
@@ -293,6 +300,22 @@ c       max distance type (1 or 2, selects the max distance given in the run fil
      1                 sampleStep(iFlt), fltDirect(iFlt), synchron(iFlT)
         if (distmaxType(iFlt) .ne. 1 .and. distmaxType(iFlt) .ne. 2) then
           write (*,'( 2x,''Flt file error: max distance type must be 1 or 2'')')
+          write (*,'( 2x,''From fault segment: '',a80)') fName(iFlt)
+          stop 99
+        endif
+
+c       Source type 8 is a member of a clustered earthquake sequence: all of the
+c       segments of its fault system occur together, with one rate. Its input is
+c       the same as source type 1, so it is stored as source type 1 with the
+c       number of its cluster.
+        iFltFirst = iFlt - iflt2 + 1
+        clusterID(iFlt) = 0
+        if (sourceType(iFlt) .eq. 8) then
+          sourceType(iFlt) = 1
+          clusterID(iFlt) = nCluster + 1
+        endif
+        if ( (clusterID(iFlt) .gt. 0) .neqv. (clusterID(iFltFirst) .gt. 0) ) then
+          write (*,'( 2x,''Flt file error: if one segment of a fault system is source type 8, all must be'')')
           write (*,'( 2x,''From fault segment: '',a80)') fName(iFlt)
           stop 99
         endif
@@ -747,8 +770,33 @@ c     End loop over iThick1
            probAct(iFlt) = probAct0
            nWidth(iFlt) = iWidth
            fsys(iFlt) = ifsystem
+
+c          Check the input of a member of a clustered sequence (source type 8)
+           if (clusterID(iFlt) .gt. 0) then
+             call S36_CheckClusterMember ( iFlt, iFltFirst, fName, synchron,
+     1            al_segWt, attenType, nWidth, nParamVar, nFtype, RateType,
+     2            rateParam, rateParamWt, magRecurWt, maxMagWt )
+           endif
 c     End loop over iFlt2 (# segments)
           enddo
+
+c         A clustered sequence has one segmentation model that includes every segment
+          if (clusterID(iFlt) .gt. 0) then
+            k = 0
+            if (nSegModel .eq. 1) then
+              do i=1,nFlt2
+                if (faultFlag(iFlt0,1,i) .eq. 1) k = k + 1
+              enddo
+            endif
+            if (k .ne. nFlt2) then
+              write (*,'( 2x,''Flt file error: a clustered sequence (source type 8) needs one segmentation'')')
+              write (*,'( 2x,''model that includes every segment of its fault system'')')
+              write (*,'( 2x,''From fault system: '',a80)') fName1
+              stop 99
+            endif
+            nCluster = nCluster + 1
+          endif
+
           ifsystem = ifsystem + 1
 c     End loop over iFlt
       enddo
@@ -1065,6 +1113,11 @@ c       Read name of this segment
 c       Read type of source (planar, areal, grid1, grid2, irregular)
         read(10,*,err=3010) sourceType(iFlt),attenType(iFlt),sampleStep(iFlt),
      1                 fltDirect(iFlt), synchron(iFlT)
+        if (sourceType(iFlt) .eq. 8) then
+          write (*,'( 2x,''Flt file error: source type 8 (clustered sequence) needs the 45.4 fault file format'')')
+          write (*,'( 2x,''From fault segment: '',a80)') fName(iFlt)
+          stop 99
+        endif
 
 c       Now read in the synchronous rupture case parameters if needed.
         if (synchron(iFlt) .gt. 0) then
@@ -1835,6 +1888,11 @@ c       Read name of this segment
 c       Read type of source (planar, areal, grid1, grid2, irregular)
         read(10,*,err=3010) sourceType(iFlt),attenType(iFlt),sampleStep(iFlt),
      1                 fltDirect(iFlt), synchron(iFlT)
+        if (sourceType(iFlt) .eq. 8) then
+          write (*,'( 2x,''Flt file error: source type 8 (clustered sequence) needs the 45.4 fault file format'')')
+          write (*,'( 2x,''From fault segment: '',a80)') fName(iFlt)
+          stop 99
+        endif
 
 c       Now read in the synchronous rupture case parameters if needed.
         if (synchron(iFlt) .gt. 0) then
@@ -2598,6 +2656,11 @@ c       Read name of this segment
 c       Read type of source (planar, areal, grid1, grid2, irregular)
         read(10,*,err=3010) sourceType(iFlt),attenType(iFlt),sampleStep(iFlt),
      1                 fltDirect(iFlt), synchron(iFlT)
+        if (sourceType(iFlt) .eq. 8) then
+          write (*,'( 2x,''Flt file error: source type 8 (clustered sequence) needs the 45.4 fault file format'')')
+          write (*,'( 2x,''From fault segment: '',a80)') fName(iFlt)
+          stop 99
+        endif
 
 c       Now read in the synchronous rupture case parameters if needed.
         if (synchron(iFlt) .gt. 0) then
