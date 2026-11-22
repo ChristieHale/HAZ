@@ -12,6 +12,7 @@ Sources used:
 - New_Madrid_clustering.xlsx (the concept spreadsheet)
 - nmfs.c, nmfs.h and nmfs_cluster.c from another hazard code
 - The fractile program, ChristieHale/Fractiles, branch `compatibility_issues`
+- USGS nshmp-haz (GitHub mirror) cluster and disaggregation code, and the USGS 2014 model's "SSCn New Madrid" cluster input (nshmp-model-cous-2014). The 5.3.1 model on code.usgs.gov could not be reached from this environment
 
 ---
 
@@ -263,7 +264,13 @@ Alternatives considered:
 | Largest ground motion | Credit the member whose ground motion is the largest in the sequence | Clear physical meaning, but needs the full distribution of each member's ground motion and an integral against the other members' CDFs for every rupture. Much more code for small differences at design levels |
 | Order of occurrence | Credit the first member in the sequence that exceeds z: member k gets α P_k Π_{j<k}(1 − P_j) | Exact and additive, but depends on an assumed order. Historically the order was NMS (Dec 1811), NMN (Jan 1812), RFT (Feb 1812); the SSC model does not specify one |
 
-Your other code's disaggregation routines (`newmadrid_deagg_sumaf*`) were not in the files received. If they use a different rule, we can compare.
+The USGS code (nshmp-haz, `Deaggregator.processClusterSources`) uses the same rule:
+1. It bins the member ruptures as if they were independent.
+2. It then scales all of a cluster's bins so that they add up to the cluster rate at the target level.
+
+It does this separately for each GMM and each geometry variant. HAZ would apply the factor on every branch.
+
+The other code's disaggregation routines (`newmadrid_deagg_sumaf*`) were not in the files received.
 
 ## A6. Output files
 
@@ -362,6 +369,22 @@ With this design, both the HAZ mean (through `segWt1`) and the fractile program 
 3. **Crustal thickness.** Only 15 km is used. Their comment cites the HID text and the AMS–BYoungs emails over the original Figure H-5.5-1. The June 2012 correction of the figure now agrees with the text: 13 / 15 / 17 km at 0.3 / 0.5 / 0.2.
 4. **Stale value.** In `nmfs_cluster()`, when a fault's curve is 0 at a ground-motion level, its probability keeps the previous level's value instead of being reset.
 5. **Missing routines.** Their disaggregation and fractile routines were not provided. The code comment says the non-NGA-East fractiles are "not done yet".
+
+### A10b. The USGS implementation
+
+Code: nshmp-haz, `Transforms.ClusterGroundMotionsToCurves` and `ExceedanceModel.clusterExceedance`. Model: the USGS 2014 model's "SSCn New Madrid" input, marked as an example for review.
+
+**What it does the same way as this spec**
+- 1 − Π(1 − P_k) on each GMM branch, including each NGA-East sub-branch, before weighting.
+- Each geometry combination is a separate cluster that is combined separately. There are eight, with weights 0.294 … 0.036, the products of 0.6/0.4, 0.7/0.3 and 0.7/0.3.
+- Disaggregation by proportional scaling (A5).
+
+**Differences from this spec and the HID**
+- **Magnitudes.** Each member lists the six rupture-set magnitudes, with the set weights, as magnitude variants. These are summed within each fault before the combination. That gives marginal per-fault magnitude distributions, as in the other code, and the joint rupture-set correlation is lost. There is no ±0.25 aleatory spread.
+- **Rate.** One rate, 0.002657 /yr: the Poisson in-cluster mean of Table H-5.5-2. No BPT branches, and no All In weight of 0.9 in this file. (The whole set has weight 0.45 in the USGS tree.)
+- **Thickness.** One thickness: width 15 km, depth 10 km.
+- **Mechanism.** RFT has dip 40° but rake 0°.
+- **Fractiles.** None.
 
 ## A11. Not supported
 
