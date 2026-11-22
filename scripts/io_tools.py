@@ -195,10 +195,14 @@ def read_out3(fname: str) -> Dict[str, T]:
             m["faults"].append(f)
 
         names = ["rate", "prob", "mag_avg", "dist_avg", "epsilon_avg"]
-        for name, line in zip(names, lines):
+        for name, line in zip(names, pop_lines(lines, len(names))):
             m[name] = fixed_split(line[61:], n_ampl * [(12, float)])
 
         site["models"].append(m)
+
+        # Skip the separator before the next period
+        if i < n_atten - 1:
+            pop_until(lines, "^  Attenuation:", include_match=False)
 
     return site
 

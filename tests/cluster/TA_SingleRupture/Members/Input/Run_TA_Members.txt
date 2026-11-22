@@ -1,0 +1,30 @@
+Source_TA_Members.txt
+45.4                        version of fault file
+30.0  45.0  -100.0  -80.0    min max lat long (grid sources only)
+1000.  1000.                 maxdist (types 1 and 2)
+Cluster test A members: NMS, RFT, NMN as ordinary sources, rate 1, one rupture each
+1  1                        nProb, nAttenType
+0.0  8  0  0                 period, max epsilon, dir flag, pcflag
+16
+0.001  0.002  0.003  0.005  0.01  0.02  0.03  0.05  0.1  0.2  0.3  0.5  1  2  3  5
+1                           Number of GM Models for Atten Type 1
+-102  0.0  0.0  1.0  0.0  0  -1  0.503442     jcalc, const1, const2, wt, SigVaradd, mixflag, j_sigma, fix_sigma (AB06 hard rock, fixed sigma)
+0                           psCorFlag
+6                           Number of deag mag values
+6.5  7  7.5  7.7  7.85  8
+7                          Number of deag dist values
+0  300  325  350  375  400  1000
+6                           Number of deag eps values
+-10.  -2.  0.  1.  2.  10.
+4                           Number of deag dir values
+0.0  0.10  0.40  2.0
+0                           soil amp
+1                           nSites
+-85.70  36.40  2000.0  0.0  0.0  0.0  0.8  0   site 1: about 350 km east of the NMFS (lon, lat, Vs30, Z1.0, Z1.5, Z2.5, Vrup, FABA)
+TA_Members_Site1.out1
+TA_Members_Site1.out2
+TA_Members_Site1.out3
+TA_Members_Site1.out4
+TA_Members_Site1.out5
+TA_Members_Site1.out6
+TA_Members_Site1.out7

@@ -1,0 +1,132 @@
+1                           iCoor (0=x,y 1=long,lat)
+3                           Number of fault systems (cluster test A members, each run as an ordinary source with rate 1)
+TA_NMS_BA-BL
+1.0                         Prob Activity
+1                           Number of seg models
+1.0                           wts for seg models
+1                           Number of segments
+1                             flags for seg model
+TA_NMS_BA-BL
+1  1  1  1.0  0  0          source type, max dist type, atten type, sample step, dirflag, synflag
+1.0                         aleatory seg wt
+90.0  0.0                   dip, depth to top
+4                           Number of long/lat pts
+-90.3737  35.5551
+-90.0972  35.8038
+-89.7517  36.4314
+-89.6209  36.5653
+1                           Number of dip variations
+0.0                           dip variations
+1.0                           wt for dip variations
+0                           Number of b-values
+1                           Number of act rates
+1.0  1.0  1.0                 b-value (not used), activity rate = 1 (hazard = P(exceedance | earthquake)), wt
+0.0  1.0  0.0  0.0          wts for sr, act. rate, rec int, MoRate branches
+0                           Number of slip-rates
+0                           Number of rec. int.
+0                           Number of moment rates
+1                           Number of mag recur models
+3                             mag recur model
+1.0                           wts for mag recur model
+0.00  0.0  0.0                mpdf1, mpdf2, mpdf3
+1                           Number of fault widths
+15.0                          seismogenic thickness (km)
+1.0                           wts for fault widths
+0  0.0  0.0  0.0            Depth pdf model and params
+1                           Number of ref mags
+7.90                          ref mag
+1.0                           wts for ref mags
+7.85  0.1  1.0  1.0  1  1  0.0    minmag, magstep, hxStep, hzStep, nRupArea, nRupWidth, minDepth
+-3.49  0.91  0.00           rupArea coeff: a, b, sigma (log10 units; Wells and Coppersmith 1994, all)
+-1.01  0.32  0.0            rupWidth coeff: a, b, sigma (log10 units; Wells and Coppersmith 1994, all)
+1                           Number of fault mech models
+1.0                           wts for fault mech models
+1                           Number of fault mech
+0.0                           fault mech
+1.0                           wts for fault mech
+TA_RFT_S
+1.0                         Prob Activity
+1                           Number of seg models
+1.0                           wts for seg models
+1                           Number of segments
+1                             flags for seg model
+TA_RFT_S
+1  1  1  1.0  0  0          source type, max dist type, atten type, sample step, dirflag, synflag
+1.0                         aleatory seg wt
+40.0  0.0                   dip, depth to top
+4                           Number of long/lat pts
+-89.5905  36.5662
+-89.4377  36.4647
+-89.4140  36.3308
+-89.3490  36.2235
+1                           Number of dip variations
+0.0                           dip variations
+1.0                           wt for dip variations
+0                           Number of b-values
+1                           Number of act rates
+1.0  1.0  1.0                 b-value (not used), activity rate = 1 (hazard = P(exceedance | earthquake)), wt
+0.0  1.0  0.0  0.0          wts for sr, act. rate, rec int, MoRate branches
+0                           Number of slip-rates
+0                           Number of rec. int.
+0                           Number of moment rates
+1                           Number of mag recur models
+3                             mag recur model
+1.0                           wts for mag recur model
+0.00  0.0  0.0                mpdf1, mpdf2, mpdf3
+1                           Number of fault widths
+15.0                          seismogenic thickness (km)
+1.0                           wts for fault widths
+0  0.0  0.0  0.0            Depth pdf model and params
+1                           Number of ref mags
+7.80                          ref mag
+1.0                           wts for ref mags
+7.75  0.1  1.0  1.0  1  1  0.0    minmag, magstep, hxStep, hzStep, nRupArea, nRupWidth, minDepth
+-3.49  0.91  0.00           rupArea coeff: a, b, sigma (log10 units; Wells and Coppersmith 1994, all)
+-1.01  0.32  0.0            rupWidth coeff: a, b, sigma (log10 units; Wells and Coppersmith 1994, all)
+1                           Number of fault mech models
+1.0                           wts for fault mech models
+1                           Number of fault mech
+1.0                           fault mech
+1.0                           wts for fault mech
+TA_NMN_S
+1.0                         Prob Activity
+1                           Number of seg models
+1.0                           wts for seg models
+1                           Number of segments
+1                             flags for seg model
+TA_NMN_S
+1  1  1  1.0  0  0          source type, max dist type, atten type, sample step, dirflag, synflag
+1.0                         aleatory seg wt
+90.0  0.0                   dip, depth to top
+2                           Number of long/lat pts
+-89.6209  36.5653
+-89.2882  36.9946
+1                           Number of dip variations
+0.0                           dip variations
+1.0                           wt for dip variations
+0                           Number of b-values
+1                           Number of act rates
+1.0  1.0  1.0                 b-value (not used), activity rate = 1 (hazard = P(exceedance | earthquake)), wt
+0.0  1.0  0.0  0.0          wts for sr, act. rate, rec int, MoRate branches
+0                           Number of slip-rates
+0                           Number of rec. int.
+0                           Number of moment rates
+1                           Number of mag recur models
+3                             mag recur model
+1.0                           wts for mag recur model
+0.00  0.0  0.0                mpdf1, mpdf2, mpdf3
+1                           Number of fault widths
+15.0                          seismogenic thickness (km)
+1.0                           wts for fault widths
+0  0.0  0.0  0.0            Depth pdf model and params
+1                           Number of ref mags
+7.60                          ref mag
+1.0                           wts for ref mags
+7.55  0.1  1.0  1.0  1  1  0.0    minmag, magstep, hxStep, hzStep, nRupArea, nRupWidth, minDepth
+-3.49  0.91  0.00           rupArea coeff: a, b, sigma (log10 units; Wells and Coppersmith 1994, all)
+-1.01  0.32  0.0            rupWidth coeff: a, b, sigma (log10 units; Wells and Coppersmith 1994, all)
+1                           Number of fault mech models
+1.0                           wts for fault mech models
+1                           Number of fault mech
+0.0                           fault mech
+1.0                           wts for fault mech

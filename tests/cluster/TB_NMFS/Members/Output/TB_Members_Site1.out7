@@ -1,0 +1,96 @@
+ 45.3 Haz45.3 Out7 file - deaggregation by source
+
+
+-------------------------------------------------------------------------------------------------------------------
+
+ SITE 1 COORDINATES:   -90.050   35.150
+  iProb, specT:     1      0.0000
+   18  nAmp
+ AMP:                                          0.005     0.010     0.020     0.030     0.050     0.070     0.100     0.150     0.200     0.300     0.400     0.500     0.700     1.000     1.500     2.000     3.000     5.000
+  TB_NMS_BA-BL                  MBar            6.90      6.90      6.90      6.91      6.92      6.93      6.95      6.97      6.98      7.01      7.06      7.10       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  RrupBar        80.61     80.47     79.88     78.99     76.31     73.16     69.03     64.46     61.54     57.06     55.01     53.95       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  RjbBar         80.61     80.47     79.88     78.99     76.31     73.16     69.03     64.45     61.54     57.06     55.01     53.95       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  RxBar         -39.62    -39.64    -39.74    -39.85    -40.19    -40.73    -41.65    -42.89    -43.77    -45.28    -45.71    -45.62       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  EBar           -4.68     -3.41     -2.20     -1.54     -0.73     -0.20      0.38      1.06      1.57      2.25      2.69      2.92       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  rSeismoBar     80.61     80.47     79.88     78.99     76.31     73.16     69.03     64.46     61.54     57.06     55.01     53.95       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  ry0Bar         65.30     65.11     64.25     62.99     59.21     54.58     48.15     40.52     35.40     27.00     22.34     19.42       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  rHypoBar      100.66    100.55    100.08     99.36     97.17     94.59     91.25     87.72     85.65     82.92     84.75     91.00       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  DipAvgBar      90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  ZtorBar         0.10      0.10      0.10      0.09      0.08      0.07      0.06      0.04      0.03      0.02      0.00      0.00       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  thetasiteBar    0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  RupWidthBar    14.65     14.66     14.67     14.68     14.72     14.75     14.79     14.84     14.87     14.93     15.00     15.00       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  HypoDepthBar    7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      MBar            7.30      7.30      7.30      7.30      7.31      7.32      7.34      7.36      7.37      7.40      7.49       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      RrupBar       122.82    122.82    122.81    122.78    122.70    122.59    122.44    122.29    122.20    122.06    121.53       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      RjbBar        121.98    121.97    121.96    121.93    121.84    121.73    121.57    121.41    121.32    121.17    120.60       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      RxBar         109.60    109.61    109.62    109.65    109.73    109.84    110.00    110.19    110.31    110.53    111.24       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      EBar           -4.97     -3.64     -2.35     -1.64     -0.72     -0.08      0.64      1.48      2.02      2.59      2.89       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      rSeismoBar    122.82    122.82    122.81    122.78    122.70    122.59    122.44    122.29    122.20    122.06    121.53       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      ry0Bar         71.92     71.92     71.90     71.86     71.75     71.59     71.38     71.15     71.01     70.77     69.90       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      rHypoBar      145.17    145.17    145.17    145.17    145.16    145.16    145.16    145.16    145.17    145.19    145.21       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      DipAvgBar      39.97     39.97     39.97     39.97     39.97     39.97     39.97     39.97     39.97     39.97     39.97       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      ZtorBar         0.63      0.63      0.62      0.61      0.58      0.53      0.47      0.40      0.35      0.26      0.00       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      thetasiteBar    0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      RupWidthBar    21.06     21.06     21.09     21.12     21.23     21.38     21.60     21.85     22.00     22.30     23.27       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_RFT_S                      HypoDepthBar    7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      MBar            7.00      7.00      7.01      7.02      7.04      7.06      7.07      7.09      7.13       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      RrupBar       167.52    167.43    167.08    166.60    165.76    165.24    164.80    164.25    163.42       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      RjbBar        167.52    167.43    167.08    166.60    165.76    165.24    164.80    164.25    163.42       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      RxBar         -49.54    -49.54    -49.54    -49.54    -49.54    -49.54    -49.54    -49.54    -49.54       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      EBar           -3.76     -2.48     -1.25     -0.53      0.44      1.10      1.75      2.31      2.61       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      rSeismoBar    167.52    167.43    167.08    166.60    165.76    165.24    164.80    164.25    163.42       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      ry0Bar        160.00    159.91    159.55    159.05    158.17    157.63    157.17    156.60    155.72       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      rHypoBar      189.15    189.12    189.03    188.92    188.77    188.69    188.64    188.61    188.63       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      DipAvgBar      90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      ZtorBar         0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      thetasiteBar    0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      RupWidthBar    14.93     14.93     14.94     14.95     14.96     14.97     14.97     14.98     15.00       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      HypoDepthBar    7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN       NaN
+
+------------------
+
+  iProb, specT:     2      1.0000
+   18  nAmp
+ AMP:                                          0.001     0.002     0.005     0.007     0.010     0.015     0.020     0.030     0.050     0.070     0.100     0.150     0.200     0.300     0.500     0.700     1.000     2.000
+  TB_NMS_BA-BL                  MBar            6.90      6.90      6.90      6.90      6.90      6.91      6.91      6.92      6.94      6.96      6.97      6.99      7.02      7.06       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  RrupBar        80.62     80.62     80.54     80.42     80.15     79.59     78.96     77.58     74.91     72.65     69.95     66.29     62.49     56.03       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  RjbBar         80.62     80.62     80.54     80.42     80.15     79.59     78.96     77.58     74.91     72.64     69.95     66.29     62.49     56.03       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  RxBar         -39.62    -39.62    -39.63    -39.65    -39.69    -39.76    -39.85    -40.05    -40.48    -40.91    -41.46    -42.28    -43.19    -45.20       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  EBar           -5.74     -4.62     -3.15     -2.62     -2.08     -1.49     -1.09     -0.54      0.16      0.63      1.15      1.74      2.12      2.59       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  rSeismoBar     80.62     80.62     80.54     80.42     80.15     79.59     78.96     77.58     74.91     72.65     69.95     66.29     62.49     56.03       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  ry0Bar         65.32     65.32     65.21     65.03     64.65     63.85     62.94     60.95     57.00     53.55     49.33     43.48     37.23     25.17       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  rHypoBar      100.66    100.66    100.61    100.52    100.33     99.94     99.48     98.49     96.57     94.95     93.04     90.51     87.92     84.73       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  DipAvgBar      90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  ZtorBar         0.10      0.10      0.10      0.10      0.10      0.09      0.09      0.08      0.06      0.05      0.04      0.03      0.01      0.00       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  thetasiteBar    0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  RupWidthBar    14.65     14.65     14.66     14.66     14.67     14.68     14.70     14.73     14.78     14.81     14.85     14.90     14.94     15.00       NaN       NaN       NaN       NaN
+  TB_NMS_BA-BL                  HypoDepthBar    7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50       NaN       NaN       NaN       NaN
+  TB_RFT_S                      MBar            7.30      7.30      7.30      7.30      7.30      7.30      7.31      7.31      7.32      7.34      7.35      7.37      7.39      7.45       NaN       NaN       NaN       NaN
+  TB_RFT_S                      RrupBar       122.82    122.82    122.82    122.82    122.81    122.79    122.77    122.72    122.62    122.52    122.40    122.25    122.09    121.64       NaN       NaN       NaN       NaN
+  TB_RFT_S                      RjbBar        121.98    121.98    121.97    121.97    121.96    121.94    121.92    121.87    121.76    121.65    121.52    121.36    121.20    120.71       NaN       NaN       NaN       NaN
+  TB_RFT_S                      RxBar         109.60    109.60    109.60    109.61    109.62    109.64    109.66    109.72    109.84    109.95    110.09    110.28    110.47    111.06       NaN       NaN       NaN       NaN
+  TB_RFT_S                      EBar           -6.29     -5.15     -3.65     -3.10     -2.53     -1.90     -1.47     -0.88     -0.13      0.39      0.96      1.63      2.09      2.64       NaN       NaN       NaN       NaN
+  TB_RFT_S                      rSeismoBar    122.82    122.82    122.82    122.82    122.81    122.79    122.77    122.72    122.62    122.52    122.40    122.25    122.09    121.64       NaN       NaN       NaN       NaN
+  TB_RFT_S                      ry0Bar         71.92     71.92     71.92     71.92     71.91     71.88     71.85     71.78     71.62     71.48     71.30     71.07     70.83     70.13       NaN       NaN       NaN       NaN
+  TB_RFT_S                      rHypoBar      145.17    145.17    145.17    145.17    145.17    145.17    145.17    145.17    145.17    145.17    145.17    145.17    145.18    145.19       NaN       NaN       NaN       NaN
+  TB_RFT_S                      DipAvgBar      39.97     39.97     39.97     39.97     39.97     39.97     39.97     39.97     39.97     39.97     39.97     39.97     39.97     39.97       NaN       NaN       NaN       NaN
+  TB_RFT_S                      ZtorBar         0.63      0.63      0.63      0.63      0.62      0.62      0.61      0.58      0.54      0.49      0.43      0.36      0.28      0.05       NaN       NaN       NaN       NaN
+  TB_RFT_S                      thetasiteBar    0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00       NaN       NaN       NaN       NaN
+  TB_RFT_S                      RupWidthBar    21.06     21.06     21.06     21.07     21.08     21.11     21.14     21.21     21.37     21.53     21.72     21.97     22.22     23.02       NaN       NaN       NaN       NaN
+  TB_RFT_S                      HypoDepthBar    7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50       NaN       NaN       NaN       NaN
+  TB_NMN_S                      MBar            7.00      7.00      7.00      7.00      7.01      7.01      7.02      7.03      7.05      7.06      7.08      7.12      7.18       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      RrupBar       167.53    167.53    167.50    167.46    167.37    167.19    167.00    166.64    166.07    165.67    165.22    164.24    163.08       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      RjbBar        167.53    167.53    167.50    167.46    167.37    167.19    167.00    166.64    166.07    165.67    165.22    164.24    163.08       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      RxBar         -49.54    -49.54    -49.54    -49.54    -49.54    -49.54    -49.54    -49.54    -49.54    -49.54    -49.54    -49.54    -49.54       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      EBar           -5.44     -4.31     -2.83     -2.30     -1.75     -1.15     -0.73     -0.13      0.65      1.19      1.77      2.39      2.76       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      rSeismoBar    167.53    167.53    167.50    167.46    167.37    167.19    167.00    166.64    166.07    165.67    165.22    164.24    163.08       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      ry0Bar        160.02    160.02    159.99    159.95    159.85    159.67    159.47    159.09    158.49    158.08    157.61    156.58    155.38       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      rHypoBar      189.15    189.15    189.15    189.14    189.13    189.10    189.07    189.02    188.95    188.91    188.87    188.80    188.82       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      DipAvgBar      90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00     90.00       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      ZtorBar         0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      thetasiteBar    0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00      0.00       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      RupWidthBar    14.93     14.93     14.93     14.93     14.94     14.94     14.94     14.95     14.96     14.97     14.98     14.99     15.00       NaN       NaN       NaN       NaN       NaN
+  TB_NMN_S                      HypoDepthBar    7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50      7.50       NaN       NaN       NaN       NaN       NaN
+
+------------------
+

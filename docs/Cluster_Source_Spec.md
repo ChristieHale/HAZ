@@ -222,7 +222,7 @@ Pmem(k, jInten, iProb, iAtten, iParam, iFtype, iFltWidth)
 - Nothing else is accumulated, and nothing is written to out1, out2 or out5.
 - `p1_sum` is still checked.
 
-**Combination.** On every branch, compute:
+**Combination.** On every branch, compute the quantities below. When every P_k is below about 1e-16, the plain product `1 − Π(1 − P_k)` loses them to round-off, so P_c is computed in a form that keeps small probabilities (for example, the sum when all P_k are tiny).
 
 - `P_c = 1 − Π_k (1 − P_k)`
 - the allocation factor `s = P_c / Σ_k P_k` (s = 1 when Σ_k P_k = 0), described in A5
@@ -473,10 +473,19 @@ Mostly verification and documentation. The allocation is already in place from P
 
 ---
 
-# Part C: Open decisions
+# Part C: Decisions
 
-1. **Disaggregation rule:** proportional allocation (recommended), largest ground motion, or order of occurrence (A5).
-2. **Disaggregation code:** if this means the companion UHS_deagg program rather than HAZ's own out4/out7, its source would help. Its inputs (out3, out4) keep their format.
-3. **out1 convention:** F1 (recommended) or F2 (A7). The fractile program draws each segment independently, so F2 would need more changes there.
-4. **Rate input:** the sequence rate repeated in each member's activity-rate lines (recommended, A3.1), or a new cluster-rate line.
-5. **Fractile repository:** should I fix the problems listed in A7 (tests that don't run; types 6 and 7 read differently from HAZ)? The tests are needed as the Phase 4 baseline.
+Agreed on November 22, 2026:
+1. **Disaggregation:** proportional allocation (A5).
+2. **out1 for fractiles:** F1, the cluster's curves in the first member's block (A7).
+3. **Rate input:** the sequence rate repeated in each member's activity-rate lines (A3.1).
+4. **Fractile repository:** fix the problems listed in A7 as part of Phase 4.
+
+Still open: whether "the disaggregation code" includes the companion UHS_deagg program. Its inputs (out3, out4) keep their format either way.
+
+# Status
+
+- **Phase 0 (done):**
+  - `scripts/cluster_reference.py` and `scripts/test_cluster_reference.py`.
+  - The member runs in `tests/cluster/` (see its README).
+  - A fix to `scripts/io_tools.py` `read_out3` for out3 files with more than one period.
