@@ -6,10 +6,12 @@ Branch: `cluster_implementation`
 
 Sources used:
 - CEUS SSC Hazard Input Document (HID), Appendix H, Section H.5.5, the New Madrid Fault System (NMFS) RLME
+- CEUS SSC Category 1 update (June 27, 2012), which corrects Figure H-5.5-1
 - NMFS_RLME.xls
 - USGS Open-File Report 2008-1128 (Petersen et al., 2008), Appendix F, on temporal clustering
 - New_Madrid_clustering.xlsx (the concept spreadsheet)
 - nmfs.c, nmfs.h and nmfs_cluster.c from another hazard code
+- The fractile program, ChristieHale/Fractiles, branch `compatibility_issues`
 
 ---
 
@@ -139,7 +141,7 @@ HAZ stops with a clear message if any of these fails.
 
 | Rule | Reason |
 |---|---|
-| If any segment of a fault system is type 8, all of them must be | Mixing members with independent sources would be ambiguous |
+| If any segment of a fault system is type 8, all of them must be | Keeps the first milestone simple; relaxed in Phase 6 (A9) |
 | One segmentation model, all flags 1 | Alternative geometries come in Phase 5 |
 | Each member has activity rates only: no slip rates, recurrence intervals or moment rates | α must be a rate of the sequence, not derived from fault area or slip. Recurrence interval is not handled for model 8 in `S31_Set_Rates` |
 | Identical activity-rate values and weights in every member | They are one rate |
@@ -272,31 +274,46 @@ Your other code's disaggregation routines (`newmadrid_deagg_sumaf*`) were not in
 | out7 | Per-member allocated disaggregation. A member with zero hazard gives NaN (as for any source today) |
 | out2 | Each member's magnitude rates, α × pMag. This is the correct count of earthquakes: each member produces one event per sequence |
 | out5, out6 | Allocated per-branch contributions. They sum correctly over the cluster's members. out6 (GMM tornado) is correct as is |
-| out1 | Set by the fractile convention (A7). Phase 2 writes allocated shares as a provisional choice |
+| out1 | Set by the fractile convention (A7): F1 if agreed |
 
 ## A7. Fractiles
 
-The fractile program is a separate program and **is not in this repository**.
+The fractile program is in the separate repository ChristieHale/Fractiles (`fract_main.f`, `rd_flt.f`). It reads:
+- the HAZ run file, for the GMM weights;
+- the fault file, for the SSC weights;
+- out1, for each segment's branch curves.
 
-From the HAZ notes:
-- It is a Monte Carlo program.
-- It reads the HAZ run file, through it the fault file, and the out1 per-branch curves.
-- It rebuilds the branch weights itself.
+In each Monte Carlo realisation it:
+1. Draws one GMM per attenuation type. That GMM is used for every source of that type.
+2. Draws one segmentation model for each fault system.
+3. For each segment flagged in that model, draws a mechanism, a thickness/dip branch and a rate × magnitude branch, **independently for each segment**. It then adds that out1 curve × the aleatory segment weight.
 
-Its source is needed before this part can be designed and tested.
+Prob Activity is not sampled; it is already inside the out1 curves.
 
-Requirements:
-1. Its fault-file reader must accept type 8. Because the format is identical to type 1, this should be small.
-2. **The cluster must be sampled as one source.** In a realisation it takes one branch, the same GMM, thickness and rate for all members. It contributes that branch's α·P_c.
+What this means for a cluster:
+- The shared GMM draw is already right.
+- The independent draws for each segment are not. The cluster's curve on a branch is not a sum over members, so it cannot be split into member curves that are drawn separately. The cluster has to be **one draw**.
 
 There are two ways to write out1:
 
 | Option | out1 content | Effect on the fractile program |
 |---|---|---|
-| **F1** | The cluster's branch curves α·P_c(z \| b) in the first member's block, zeros in the other members' blocks | Correct even if the program samples members independently. Needs only requirement 1 |
-| **F2** | Allocated shares in each member's block | Correct only if the program samples the same branch for all members. A program not updated for it silently gives wrong fractiles |
+| **F1** | The cluster's branch curves α·P_c(z \| b) in the first member's block, zeros in the other members' blocks | Correct as the program stands: the first member's draw picks the cluster's branch, and the zero blocks add nothing. Needs only the fault reader to accept type 8, a one-line change in `rd_flt.f` (type 8 joins type 1 in the geometry branch; the dip and thickness lines are already read for every type except 5) |
+| **F2** | Allocated shares in each member's block | Wrong as the program stands: each member would be drawn on a different branch |
 
-**F1 is recommended** for the first milestone. With alternative geometries (Phase 5), the choice depends on how the fractile program samples segmentation models, which is why we need its source.
+**F1 is recommended.**
+
+The segmentation-model draw will be useful later. It is already a mutually exclusive choice for each fault system, which is exactly what the alternative geometries and the in/out-of-cluster branches need (A8, A9). A cluster with several segmentation models needs one more change in the fractile program: draw one branch for the cluster, and use the cluster curve for the drawn segmentation model. HAZ would write those curves to out1 as extra blocks after the members' blocks. The format will be fixed in Phase 5.
+
+**Problems already in the fractile repository.** These are not part of this work unless you want them fixed:
+- **Tests don't run.** Neither test case runs as committed:
+  - their run files lack the PC flag that `rd_input.f` now reads;
+  - their out1 files come from an older HAZ version, which the out1 version check rejects.
+- **Source types 6 and 7 are read differently from HAZ.**
+  - Type 6 geometry is not read.
+  - For types 6 and 7, it reads dip-variation and thickness lines that HAZ does not have.
+
+  A fault file containing either type would be misread.
 
 ## A8. Epistemic branches (Phase 5)
 
@@ -312,7 +329,7 @@ How the NMFS logic tree maps onto this:
 
 | NMFS node | HAZ input | How it is combined |
 |---|---|---|
-| Crustal thickness 13 / 15 / 17 km | Fault widths, same list in each member | Matched: one thickness for the whole sequence |
+| Crustal thickness 13 / 15 / 17 km, weights 0.3 / 0.5 / 0.2 (corrected Figure H-5.5-1, June 2012) | Fault widths, same list in each member | Matched: one thickness for the whole sequence |
 | Rupture sets (Table H-5.5-1, joint magnitudes) | Reference magnitudes, one per set in each member, same weights | Matched: rupture set i uses each member's i-th magnitude. The joint distribution is kept |
 | Recurrence (Poisson / BPT) and rate tables | Activity-rate branches, identical in each member | Matched. Linear, so exact either way |
 | GMM | Run file, attenuation type | Matched |
@@ -322,22 +339,27 @@ With segmentation models, member k's multiplier in pass 2 becomes Σ over the mo
 
 ## A9. Out-of-cluster alternatives (Phase 6)
 
-HID Figure H-5.5-1 has three top-level branches:
+HID Figure H-5.5-1 has three mutually exclusive top-level branches. They map onto segmentation models of a single NMFS fault system:
 
-| Branch | Weight | Representation |
+| Branch | Weight | Segmentation models |
 |---|---|---|
-| All In | 0.9 | The type 8 cluster, Prob Activity 0.9 |
-| All Out Except RFT | 0.05 | An ordinary type 1 RFT source with the Table H-5.5-6 rates and Prob Activity 0.05 |
-| All Out | 0.05 | Nothing |
+| All In | 0.9 | The eight geometry combinations of the cluster members (A8), weights 0.9 × geometry weight |
+| All Out Except RFT | 0.05 | An ordinary type 1 RFT segment with the Table H-5.5-6 rates. Two models (RFT-S, RFT-L), weights 0.05 × 0.7 and 0.05 × 0.3 |
+| All Out | 0.05 | One model with no segments flagged |
 
-- **Mean hazard:** this representation is correct as is.
-- **Fractiles:** the three branches are mutually exclusive, so they must not be sampled as independent sources. How to express that depends on the fractile program (A7).
+Prob Activity of the system is then 1.0.
+
+This needs a fault system to hold both cluster members and ordinary segments; the first milestone forbids that (A3.2). Within a segmentation model:
+- the flagged members combine as a cluster;
+- the flagged ordinary segments add as usual.
+
+With this design, both the HAZ mean (through `segWt1`) and the fractile program (through its segmentation-model draw) already treat the three branches as mutually exclusive.
 
 ## A10. Differences from the other implementation (for the Phase 6 comparison)
 
 1. **Order of averaging.** Each fault's curve is averaged over all branches (geometry, magnitude, GMM) before the nonlinear combination. This gives the approximation described in A2.3.
 2. **Magnitudes.** The joint rupture sets are broken up into marginal per-fault magnitude distributions, which loses the correlation between members.
-3. **Crustal thickness.** Only 15 km is used. This follows the HID text and the AMS–BYoungs emails rather than Figure H-5.5-1.
+3. **Crustal thickness.** Only 15 km is used. Their comment cites the HID text and the AMS–BYoungs emails over the original Figure H-5.5-1. The June 2012 correction of the figure now agrees with the text: 13 / 15 / 17 km at 0.3 / 0.5 / 0.2.
 4. **Stale value.** In `nmfs_cluster()`, when a fault's curve is 0 at a ground-motion level, its probability keeps the previous level's value instead of being reset.
 5. **Missing routines.** Their disaggregation and fractile routines were not provided. The code comment says the non-NGA-East fractiles are "not done yet".
 
@@ -398,12 +420,14 @@ Mostly verification and documentation. The allocation is already in place from P
 - **out7:** checked the same way.
 - Add source type 8 and the disaggregation rule to the HAZ notes.
 
-### Phase 4: fractiles (needs the fractile program's source)
+### Phase 4: fractiles (ChristieHale/Fractiles)
 
-- Agree on F1 or F2, write out1 accordingly, and update the fractile program.
+- First, with your agreement, make the fractile repository's two test cases run again (A7). They are the baseline for this phase.
+- Accept type 8 in `rd_flt.f`. HAZ writes out1 as F1.
 - Tests:
   - the fractiles' mean converges to HAZ's mean;
-  - with two GMMs weighted 0.5 / 0.5, the fractiles of a cluster-only run match the exact two-point distribution.
+  - with two GMMs weighted 0.5 / 0.5, the fractiles of a cluster-only run match the exact two-point distribution;
+  - the existing fractile tests are unchanged.
 
 ### Phase 5: epistemic branches
 
@@ -417,11 +441,10 @@ Mostly verification and documentation. The allocation is already in place from P
 ### Phase 6: the full NMFS model
 
 - Fault-file inputs for the HID logic tree:
-  - the in-cluster cluster, Prob Activity 0.9;
-  - the out-of-cluster RFT, Prob Activity 0.05;
+  - the in-cluster and out-of-cluster branches as segmentation models (A9);
   - BPT rates as alternative rate branches (HID Tables H-5.5-2 to H-5.5-6);
-  - the thickness weights you choose.
-- Fractile treatment of the mutually exclusive top-level branches.
+  - thickness weights 0.3 / 0.5 / 0.2 (June 2012 correction).
+- Fractile changes for clusters with several segmentation models (A7).
 - Comparison with the other code, explaining differences with A10.
 - Final documentation.
 
@@ -430,7 +453,7 @@ Mostly verification and documentation. The allocation is already in place from P
 # Part C: Open decisions
 
 1. **Disaggregation rule:** proportional allocation (recommended), largest ground motion, or order of occurrence (A5).
-2. **Fractile program:** can you share its source? Should it move into this repository, now that HAZ is moving to GitHub? If "the disaggregation code" means the companion UHS_deagg program rather than HAZ's own out4/out7, its source would help too. Its inputs (out3, out4) keep their format.
-3. **out1 convention:** F1 (recommended) or F2 (A7). This can wait until Phase 4.
+2. **Disaggregation code:** if this means the companion UHS_deagg program rather than HAZ's own out4/out7, its source would help. Its inputs (out3, out4) keep their format.
+3. **out1 convention:** F1 (recommended) or F2 (A7). The fractile program draws each segment independently, so F2 would need more changes there.
 4. **Rate input:** the sequence rate repeated in each member's activity-rate lines (recommended, A3.1), or a new cluster-rate line.
-5. **Thickness weights:** HID text (0.3 / 0.5 / 0.2), Figure H-5.5-1 (0.4 / 0.4 / 0.2), or 15 km only. This can wait until Phase 6.
+5. **Fractile repository:** should I fix the problems listed in A7 (tests that don't run; types 6 and 7 read differently from HAZ)? The tests are needed as the Phase 4 baseline.
