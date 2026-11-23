@@ -510,3 +510,10 @@ Agreed on November 22, 2026 (5 on November 23):
   - The comparisons allow for the rounding of the printed numbers: out4 has 3 significant digits, and a reference value built from an input such as 0.103 can be off by half a unit of that input's last digit.
   - With the allocation factor left out of the reference (s = 1), the out3, out4 and out7 checks of test B fail, so the tests distinguish the allocation from independent members.
   - Source type 8 and the disaggregation rule are in `docs/HAZ-45.4 Notes.docx` (Fault File Notes, Line 8), with a note on UHS_deagg in the UHS section.
+- **Phase 4 (done)**, in ChristieHale/Fractiles, branch `compatibility_issues` (605e75b):
+  - The repository's two tests run again: the PC flag is added to their HAZ run files, and their outputs are regenerated with HAZ 45.4. The fractiles agree with the old outputs to within 6e-4.
+  - The hazard array is sized from the run. At the maximum dimensions it needed about 5.7 GB of static storage, which cannot be linked on arm64.
+  - Source types 6 and 7 are read as in HAZ (A7), and source type 8 is read as type 1. HAZ writes out1 as F1, so the cluster is sampled as one source.
+  - Three problems found on the way are fixed: the last period's test ground motions were used for every period; out1 blocks were read with the selected period's numbers of GMMs and levels; and a fractile curve that did not cross a hazard level gave a UHS of zero (now a negative value that says where the curve ran out).
+  - New tests: `Cluster_Test` (test B, two GMMs at 0.5 / 0.5) checks the two-point distribution of the fractiles, the mean against the average of the two curves, and the 5th and 95th UHS values. `Source_Types_Test` (types 1, 6 and 7) checks that every fractile equals HAZ's total when there is a single branch. `scripts/test_reference.py` runs all four tests and, with `HAZ_BIN`, reruns their hazard cases.
+
