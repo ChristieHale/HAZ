@@ -474,13 +474,13 @@ Mostly verification and documentation. The allocation is already in place from P
 
 # Part C: Decisions
 
-Agreed on November 22, 2026:
+Agreed on November 22, 2026 (5 on November 23):
 1. **Disaggregation:** proportional allocation (A5).
 2. **out1 for fractiles:** F1, the cluster's curves in the first member's block (A7).
 3. **Rate input:** the sequence rate repeated in each member's activity-rate lines (A3.1).
 4. **Fractile repository:** fix the problems listed in A7 as part of Phase 4.
 
-Still open: whether "the disaggregation code" includes the companion UHS_deagg program. Its inputs (out3, out4) keep their format either way.
+5. **UHS_deagg:** the companion program is in scope. It is in ChristieHale/UHS_Deagg, branch `compatibility_issues`, which reads out3 and out4 from HAZ 45.2 to 45.4 and has a reference test of a cluster (HAZ test B). out3 and out4 keep their format, so clusters need no other change there.
 
 # Status
 
@@ -501,3 +501,12 @@ Still open: whether "the disaggregation code" includes the companion UHS_deagg p
   - out1 follows F1 (A7), written from Phase 2 on so that out1 is never in an interim form.
   - `scripts/test_cluster_hazard.py` has the Phase 2 tests. The Cluster runs of tests A and B now have reference outputs, and the test runner no longer skips them.
   - Two log-file formats in `src/21_FRISK_IO.f` lacked a comma (`2xi8`, `2xa80`). gfortran 16 stops on them at run time, so they were fixed first, in a separate commit; the output is unchanged.
+- **Phase 3 (done):**
+  - No Fortran changes: the allocation is in place from Phase 2.
+  - `scripts/test_cluster_deagg.py` runs the Cluster inputs of tests A and B, and Members runs of test B with each GMM on its own, and checks against the reference tool:
+    - out3: each member's share, Σ_g w_g α s_g P_kg;
+    - out4: the M–R and M–R–ε bins and M̄, D̄, ε̄ (`cluster_reference.cluster_deagg`);
+    - out7: each member's means, weighted by w_g s_g P_kg (`cluster_reference.cluster_source_deagg`, with a new out7 reader).
+  - The comparisons allow for the rounding of the printed numbers: out4 has 3 significant digits, and a reference value built from an input such as 0.103 can be off by half a unit of that input's last digit.
+  - With the allocation factor left out of the reference (s = 1), the out3, out4 and out7 checks of test B fail, so the tests distinguish the allocation from independent members.
+  - Source type 8 and the disaggregation rule are in `docs/HAZ-45.4 Notes.docx` (Fault File Notes, Line 8), with a note on UHS_deagg in the UHS section.

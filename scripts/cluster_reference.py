@@ -223,6 +223,42 @@ def read_out4(path):
     return dict(edges=edges, periods=periods)
 
 
+_VALUE = re.compile(r"-?\d+\.\d+|-?NaN|\*+", re.IGNORECASE)
+
+
+def read_out7(path):
+    """Read every period of a HAZ out7 file (disaggregation by source).
+
+    Returns a list of periods, each a dict with the test levels and
+    'sources': a list, in file order, of (name, {label: values}), where label
+    is MBar, RrupBar, EBar, ... and values is an array over the levels
+    (NaN where the source has no hazard or the field overflows).
+    """
+    with open(path) as f:
+        lines = f.read().splitlines()
+    periods = []
+    current = None
+    for line in lines:
+        if line.startswith("  iProb, specT:"):
+            current = dict(levels=None, sources=[])
+            periods.append(current)
+        elif current is None:
+            continue
+        elif line.startswith(" AMP:"):
+            current["levels"] = _floats(line[5:])
+        elif len(line) > 32 and line[:2] == "  " and line[2] != " ":
+            name = line[2:32].strip()
+            rest = line[32:].split(None, 1)
+            if len(rest) < 2 or not rest[0].endswith("Bar"):
+                continue
+            label = rest[0]
+            values = [float("nan") if v.startswith("*") else float(v) for v in _VALUE.findall(rest[1])]
+            if not current["sources"] or current["sources"][-1][0] != name:
+                current["sources"].append((name, {}))
+            current["sources"][-1][1][label] = np.array(values)
+    return periods
+
+
 # ---------------------------------------------------------------------------
 # Cluster hazard from member runs
 # ---------------------------------------------------------------------------
@@ -295,6 +331,36 @@ def cluster_deagg(gmm_runs, alpha, gm_weights, members, iprob):
     with np.errstate(divide="ignore", invalid="ignore"):
         out = dict(rate=rate, mr=mr / rate, mre=mre / rate)
         out.update({k: v / rate for k, v in bars.items()})
+    return out
+
+
+def cluster_source_deagg(gmm_runs, gm_weights, members, iprob):
+    """Allocated disaggregation of each member (out7) from one member run per GMM.
+
+    gmm_runs is a list (one per GMM, same order as gm_weights) of
+    (out1_blocks, out7) from runs with a single GMM in which the members are
+    ordinary sources with rate 1. On GMM branch g, member k's allocated
+    contribution is w_g * alpha * s_g(z) * P_kg(z), so each of its mean values
+    (M, distances, epsilon, ...) is the average of the single-GMM values
+    weighted by w_g * s_g * P_kg. alpha cancels.
+
+    Returns a list (one per member) of {label: values}.
+    """
+    num = [dict() for _ in members]
+    den = [0.0 for _ in members]
+    for (out1, out7), w in zip(gmm_runs, gm_weights):
+        p = member_probabilities(out1, members, iprob)[:, 0, :]
+        s = allocation_factor(p)
+        sources = out7[iprob - 1]["sources"]
+        for k, iflt in enumerate(members):
+            weight = w * s * p[k]
+            den[k] = den[k] + weight
+            for label, values in sources[iflt - 1][1].items():
+                num[k][label] = num[k].get(label, 0.0) + weight * np.nan_to_num(values)
+    out = []
+    with np.errstate(divide="ignore", invalid="ignore"):
+        for k in range(len(members)):
+            out.append({label: np.where(den[k] > 0.0, v / den[k], np.nan) for label, v in num[k].items()})
     return out
 
 

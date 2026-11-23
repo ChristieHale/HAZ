@@ -104,7 +104,15 @@ HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_reader.py
 
 # Mean hazard: runs HAZ on the Members and Cluster inputs and compares them
 HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_hazard.py
+
+# Disaggregation: also runs test B's members with each GMM on its own
+HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_deagg.py
 ```
+
+`test_cluster_deagg.py` checks the Cluster runs' out3 member shares, out4 bins
+and means, and out7 member means against the reference tool, applied to
+Members runs with a single GMM each. Its comparisons allow for the rounding of
+the printed numbers in both the Cluster run and the Members runs.
 
 `test_cluster_hazard.py` checks:
 - **Test A:** the cluster curve against `alpha * (1 - prod_k (1 - P_k))`, with
