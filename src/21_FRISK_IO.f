@@ -169,7 +169,7 @@ C     Check for Common Functional Form with Rrup Distance (10000<jcalc<11000) se
             if (abs(jcalc(i,j,k)) .gt. 10000 .and. abs(jcalc(i,j,k)) .lt. 11000) then
                 coefcountrrup = abs(jcalc(i,j,k)) - 10000
                 read (13,*,err=2008) (cfcoefrrup(coefcountrrup,jj),jj=1,11)
-                write (18,'(a16,2xi8,11(2x,f12.6))')
+                write (18,'(a16,2x,i8,11(2x,f12.6))')
      1             'CF(RRup) Coefs: ', coefcountrrup,(cfcoefrrup(coefcountrrup,jj),jj=1,11)
             endif
 C     Check for Common Functional Form with RJB Distance (11000<jcalc<12000) selected and if so read in coefficients.
@@ -666,7 +666,7 @@ c  ------------------------------------------------------------------
 
       write (18,'(1x,a50)') '-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*'
       write (18,*)
-      write (18,'(1x,a34,2xa80)') 'Filename for deaggregation output:', file1
+      write (18,'(1x,a34,2x,a80)') 'Filename for deaggregation output:', file1
       write (18,*)
 
       nwr = 14
