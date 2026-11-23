@@ -78,10 +78,14 @@ def member_and_cluster(runs, tag, site):
 
 
 def cluster_out1(blocks, iprob):
-    """The cluster's curves (first member's block), and the other members' blocks."""
+    """The cluster's curves and the members' blocks.
+
+    The members' blocks hold zeros; the cluster's curves follow them as
+    source nFlt + 1 (one segmentation model).
+    """
     found = [b for b in blocks if b["iprob"] == iprob]
-    assert [b["iflt"] for b in found] == MEMBERS
-    return found[0]["curves"][:, 0, 0, :], [b["curves"] for b in found[1:]]
+    assert [b["iflt"] for b in found] == MEMBERS + [len(MEMBERS) + 1]
+    return found[-1]["curves"][:, 0, 0, :], [b["curves"] for b in found[:-1]]
 
 
 def assert_close(actual, expected, rtol, floor):
@@ -215,8 +219,10 @@ def test_one_member_cluster_is_ordinary_source(tmp_path):
         with open(folders["cluster"] / name) as f1, open(folders["ordinary"] / name) as f2:
             assert f1.read() == f2.read(), name
 
-    # out1: alpha * P_c, summed in a different order
+    # out1: the member's block is zero and the cluster's curve, alpha * P_c
+    # (summed in a different order), follows it as source 2
     a = cr.read_out1(folders["cluster"] / "TA_Cluster_Site1.out1")
     b = cr.read_out1(folders["ordinary"] / "TA_Cluster_Site1.out1")
-    assert len(a) == len(b) == 1
-    np.testing.assert_allclose(a[0]["curves"], b[0]["curves"], rtol=2e-6, atol=0.0)
+    assert [x["iflt"] for x in a] == [1, 2] and len(b) == 1
+    assert np.all(a[0]["curves"] == 0.0)
+    np.testing.assert_allclose(a[1]["curves"], b[0]["curves"], rtol=2e-6, atol=0.0)

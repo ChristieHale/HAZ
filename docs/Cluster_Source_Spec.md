@@ -143,14 +143,14 @@ HAZ stops with a clear message if any of these fails.
 | Rule | Reason |
 |---|---|
 | If any segment of a fault system is type 8, all of them must be | Keeps the first milestone simple; relaxed in Phase 6 (A9) |
-| One segmentation model, all flags 1 | Alternative geometries come in Phase 5 |
+| Every segmentation model includes a member, and every member is in a model (Phase 5; until then, one model with all flags 1) | Each model is one combination of members, such as one geometry of each fault (A8) |
 | Each member has activity rates only: no slip rates, recurrence intervals or moment rates | α must be a rate of the sequence, not derived from fault area or slip. Recurrence interval is not handled for model 8 in `S31_Set_Rates` |
 | Identical activity-rate values and weights in every member | They are one rate |
 | Aleatory segment weight = 1.0 | Every member occurs in every sequence |
 | `synflag` = 0 | Not combined with synchronous rupture |
 | Same attenuation type in every member | GMM branches are matched across members |
 | PC method off (`pcflag` = 0) for the periods run | The PC terms are linear in the rate |
-| nWidth = 1, nParamVar = 1, nFtype = 1 per member | Lifted in Phase 5 |
+| The same numbers and weights of thickness-and-dip, rate-and-magnitude and mechanism branches in every member (Phase 5; until then, one of each) | Branches are matched by index (A8) |
 
 ### A3.3 Example: the NMS member, 45.4 format
 
@@ -280,7 +280,7 @@ The other code's disaggregation routines (`newmadrid_deagg_sumaf*`) were not in 
 | out7 | Per-member allocated disaggregation. A member with zero hazard gives NaN (as for any source today) |
 | out2 | Each member's magnitude rates, α × pMag. This is the correct count of earthquakes: each member produces one event per sequence |
 | out5, out6 | Allocated per-branch contributions. They sum correctly over the cluster's members. out6 (GMM tornado) is correct as is |
-| out1 | Set by the fractile convention (A7): F1 if agreed |
+| out1 | Convention F3 (A7): zeros in the members' blocks; the cluster's branch curves follow the last member, one set per segmentation model |
 
 ## A7. Fractiles
 
@@ -307,9 +307,13 @@ There are two ways to write out1:
 | **F1** | The cluster's branch curves α·P_c(z \| b) in the first member's block, zeros in the other members' blocks | Correct as the program stands: the first member's draw picks the cluster's branch, and the zero blocks add nothing. Needs only the fault reader to accept type 8, a one-line change in `rd_flt.f` (type 8 joins type 1 in the geometry branch; the dip and thickness lines are already read for every type except 5) |
 | **F2** | Allocated shares in each member's block | Wrong as the program stands: each member would be drawn on a different branch |
 
-**F1 is recommended.**
+F1 was used in Phases 2 to 4. It cannot hold a cluster with several segmentation models: one member (such as BA-BL) is in several models, and the cluster's curve depends on the model. From Phase 5, out1 follows **F3** (agreed on November 23, 2026):
 
-The segmentation-model draw will be useful later. It is already a mutually exclusive choice for each fault system, which is exactly what the alternative geometries and the in/out-of-cluster branches need (A8, A9). A cluster with several segmentation models needs one more change in the fractile program: draw one branch for the cluster, and use the cluster curve for the drawn segmentation model. HAZ would write those curves to out1 as extra blocks after the members' blocks. The format will be fixed in Phase 5.
+| Option | out1 content | Effect on the fractile program |
+|---|---|---|
+| **F3** | Zeros in every member's block. After the cluster's last member, one set of blocks for each segmentation model s, in the usual layout (one block per width branch and period), holding α·ProbAct·P_c,s(z \| b) on every branch. The source number in the block header is nFlt + 1, nFlt + 2, ... in the order the sets are written for the site, so it never clashes with a source | Draw a segmentation model for the cluster's fault system, then one branch with the cluster's matched weights, and add that model's curve. One code path for every cluster, with one or several segmentation models |
+
+The segmentation-model draw is already a mutually exclusive choice for each fault system, which is what the alternative geometries and the in/out-of-cluster branches need (A8, A9).
 
 **Problems already in the fractile repository.** These are not part of this work unless you want them fixed:
 - **Tests don't run.** Neither test case runs as committed:
@@ -341,7 +345,7 @@ How the NMFS logic tree maps onto this:
 | GMM | Run file, attenuation type | Matched |
 | Alternative geometries (BA-BL/BA-BFZ, NMN-S/L, RFT-S/L) | **Segmentation models** of the cluster's fault system. Six segments, 2 × 2 × 2 = 8 models with product weights, flags selecting one geometry per fault | Combination within each segmentation model, weighted by its weight |
 
-With segmentation models, member k's multiplier in pass 2 becomes Σ over the models containing k of segWt_s · s_s(z | b). This replaces the usual `segWt1`. Totals stay exact.
+With segmentation models, P_c,s and s_s are computed for each model s from the members it includes. Member k's factor in pass 2 is Σ over the models containing k of w_s · s_s(z | b), divided by `segWt1(k)` (the sum of those w_s), because pass 2 multiplies every contribution of a segment by `segWt1` as usual. On every branch the members' contributions then add up to α · ProbAct · Σ_s w_s P_c,s. With one model of weight 1 the factor is s itself, so a single-model cluster gives the same out2 to out7 as in Phase 2.
 
 ## A9. Out-of-cluster alternatives (Phase 6)
 
@@ -445,7 +449,7 @@ Mostly verification and documentation. The allocation is already in place from P
 ### Phase 4: fractiles (ChristieHale/Fractiles)
 
 - First, with your agreement, make the fractile repository's two test cases run again (A7). They are the baseline for this phase.
-- Accept type 8 in `rd_flt.f`. HAZ writes out1 as F1.
+- Accept type 8 in `rd_flt.f`. HAZ writes out1 as F1 (F3 from Phase 5).
 - Tests:
   - the fractiles' mean converges to HAZ's mean;
   - with two GMMs weighted 0.5 / 0.5, the fractiles of a cluster-only run match the exact two-point distribution;
@@ -476,7 +480,7 @@ Mostly verification and documentation. The allocation is already in place from P
 
 Agreed on November 22, 2026 (5 on November 23):
 1. **Disaggregation:** proportional allocation (A5).
-2. **out1 for fractiles:** F1, the cluster's curves in the first member's block (A7).
+2. **out1 for fractiles:** F1, the cluster's curves in the first member's block (A7). Replaced on November 23, 2026 by F3 (extra blocks after the members, one set per segmentation model), needed for alternative geometries.
 3. **Rate input:** the sequence rate repeated in each member's activity-rate lines (A3.1).
 4. **Fractile repository:** fix the problems listed in A7 as part of Phase 4.
 
@@ -516,4 +520,12 @@ Agreed on November 22, 2026 (5 on November 23):
   - Source types 6 and 7 are read as in HAZ (A7), and source type 8 is read as type 1. HAZ writes out1 as F1, so the cluster is sampled as one source.
   - Three problems found on the way are fixed: the last period's test ground motions were used for every period; out1 blocks were read with the selected period's numbers of GMMs and levels; and a fractile curve that did not cross a hazard level gave a UHS of zero (now a negative value that says where the curve ran out).
   - New tests: `Cluster_Test` (test B, two GMMs at 0.5 / 0.5) checks the two-point distribution of the fractiles, the mean against the average of the two curves, and the 5th and 95th UHS values. `Source_Types_Test` (types 1, 6 and 7) checks that every fractile equals HAZ's total when there is a single branch. `scripts/test_reference.py` runs all four tests and, with `HAZ_BIN`, reruns their hazard cases.
+- **Phase 5, HAZ (done; Fractiles to follow):**
+  - Reader (A3.2, A8): the single-branch and single-model rules are lifted. Every member of a cluster must have the same numbers and weights of thickness-and-dip, rate-and-magnitude and mechanism branches, and the same rates; magnitudes may differ, so a branch can hold a joint rupture set. Every segmentation model must include a member, and every member must be in a model.
+  - Combination for each segmentation model and the pass 2 factor as in A8 (`S36_ClusterCombine`); out1 as F3 (`S36_ClusterWriteOut1`).
+  - Pass 1 no longer clears the out1 and out5 work arrays, and pass 2 adds nothing to out1's; clearing them (at HAZ's maximum dimensions, about 200 MB) took about 90% of a small run, so a cluster now costs about the same time as its members run alone.
+  - Test C (`tests/cluster/TC_Geometries`): the six NMFS traces, eight segmentation models (weights 0.6/0.4 × 0.7/0.3 × 0.7/0.3), three thicknesses (0.3/0.5/0.2), two rates × rupture sets 1 and 5, two mechanisms and two GMMs. `scripts/test_cluster_branches.py` checks every out1 block (each model, width and branch), the out3 total and each member's share against the reference tool, and that the averaged approximation (A2.3) is never below the exact result.
+  - Size of the approximation in test C: up to about 15% above the exact rate at intermediate ground motions (for example 1.15 at 0.07 g, 1.0 s, Memphis), and equal at low and high ground motions. Treating the members as independent gives up to 3 times the exact rate at low ground motions.
+  - Storage at the full NMFS counts (6 members, 18 levels, 16 periods, 17 GMMs, 120 rate × magnitude branches, 3 thicknesses, 8 models) is about 280 MB; with 7 periods, about 120 MB.
+  - The single-model clusters of tests A and B give the same out2 to out7 as before; only their out1 changes (F3). Regression otherwise byte-identical.
 

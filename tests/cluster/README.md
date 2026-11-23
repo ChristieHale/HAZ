@@ -25,9 +25,10 @@ activity rate. `scripts/test_cluster_hazard.py` runs HAZ on both and compares
 the Cluster run with the reference values from the Members run. The Cluster
 runs' outputs are also regression references for `scripts/run_tests.py`.
 
-In the Cluster runs' out1, the first member's block holds the cluster's branch
-curves, `alpha * ProbAct * P_c`, and the other members' blocks hold zeros
-(convention F1 in the spec). In out3, each member's line holds its allocated
+In the Cluster runs' out1, the members' blocks hold zeros, and the cluster's
+branch curves, `alpha * ProbAct * P_c`, follow the last member, one set of
+blocks for each segmentation model, numbered nFlt + 1, nFlt + 2, ...
+(convention F3 in the spec). In out3, each member's line holds its allocated
 share, and the shares add up to the cluster hazard.
 
 All of the input files are written by `make_inputs.py`; edit it, not the inputs:
@@ -80,6 +81,27 @@ Each member has exactly one rupture:
 - Two periods: PGA and 1.0 s.
 - Two sites: Memphis and St. Louis.
 
+### TC_Geometries
+
+Alternative geometries and epistemic branches (Phase 5).
+
+**Segments and segmentation models**
+- Six segments: the BA-BL and BA-BFZ traces of NMS, RFT-S and RFT-L, NMN-S and
+  NMN-L (NMFS_RLME.xls).
+- Eight segmentation models, each picking one geometry of each fault, with
+  product weights 0.6/0.4 (NMS) × 0.7/0.3 (RFT) × 0.7/0.3 (NMN).
+
+**Branches, matched by index in every member**
+- Thickness 13 / 15 / 17 km, weights 0.3 / 0.5 / 0.2.
+- Two rates of the sequence (3.7e-3 and 1.4e-3, 0.5 / 0.5) times rupture sets 1
+  and 5 of HID Table H-5.5-1 (each member's own magnitude, 0.5 / 0.5), with the
+  ±0.25 boxcar.
+- Two mechanisms (0.5 / 0.5) and the two GMMs of test B.
+
+The Members run has activity rate 1 on every branch, so each out1 curve is
+P_k on that branch. Two periods (PGA and 1.0 s), two sites (Memphis and St.
+Louis).
+
 ## Commands
 
 From `scripts/`:
@@ -107,6 +129,9 @@ HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_hazard.py
 
 # Disaggregation: also runs test B's members with each GMM on its own
 HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_deagg.py
+
+# Branches and segmentation models: test C
+HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_branches.py
 ```
 
 `test_cluster_deagg.py` checks the Cluster runs' out3 member shares, out4 bins

@@ -9,12 +9,17 @@ c     Probabilisitic Seismic Hazard Program (PSHA)
 c     Clustered sequences (source type 8), see 36_Cluster.f:
 c       clPass   0 = ordinary source, 1 = probability pass, 2 = contribution pass
 c       Pmem     member exceedance probabilities P_k (pass 1)
-c       Pclu     cluster probability P_c = 1 - prod_k (1 - P_k)
-c       sClu     allocation factor s = P_c / sum_k P_k (pass 2)
-      real*8, allocatable :: Pmem(:,:,:,:,:,:,:), Pclu(:,:,:,:,:,:),
-     1                       sClu(:,:,:,:,:,:)
+c       Pclu     cluster probability P_c = 1 - prod_k (1 - P_k), for each
+c                segmentation model of the cluster's fault system
+c       sMem     each member's factor in pass 2: the allocation factors
+c                s = P_c / sum_k P_k of the models that include the member,
+c                weighted by the models' weights, over the member's total
+c                segmentation weight
+c       iClV     number of out1 blocks of cluster curves written for this site
+      real*8, allocatable :: Pmem(:,:,:,:,:,:,:), sMem(:,:,:,:,:,:,:),
+     1                       Pclu(:,:,:,:,:,:,:)
       integer clPass, iClFirst, iClLast, kMem, nClMem, nClInten,
-     1        nClAtten, nClParam, nClFtype, nClWidth
+     1        nClAtten, nClParam, nClFtype, nClWidth, nClSeg, iClV
 
 c     Write Program information to the screen.
       write (*,*) '*********************************'
@@ -84,7 +89,7 @@ c     read fault File
 c     Clustered earthquake sequences (source type 8): summary and checks
       call S36_ClusterSetup ( nFlt, clusterID, fName, fsys, probAct,
      1     nParamVar, rateParam, rateParamWt, magRecur, maxMag,
-     2     minMag, nProb, specT, PCflag )
+     2     minMag, nProb, specT, PCflag, nSegModel, nWidth, nFtype )
 
 c     Loop Over Number of Sites
       read (13,*,err=2100) nSite
@@ -156,6 +161,7 @@ c      The members of a cluster (source type 8) are processed twice: pass 1
 c      computes each member's exceedance probability, and pass 2 adds the
 c      members' contributions with the allocation factor (see 36_Cluster.f).
        clPass = 0
+       iClV = 0
        iFlt = 0
  890   iFlt = iFlt + 1
        if ( iFlt .gt. nFlt ) goto 901
@@ -172,9 +178,10 @@ c       First member of a cluster: start the probability pass
           call S36_ClusterSize ( iClFirst, iClLast, nProb, nInten,
      1         nAtten, attenType, nParamVar, nFtype, nWidth, nClMem,
      2         nClInten, nClAtten, nClParam, nClFtype, nClWidth )
+          nClSeg = nSegModel(iClFirst)
           allocate ( Pmem(nClMem,nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth),
-     1               Pclu(nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth),
-     2               sClu(nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth) )
+     1               sMem(nClMem,nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth),
+     2               Pclu(nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth,nClSeg) )
           Pmem = 0.0d0
         endif
         if ( clPass .gt. 0 ) kMem = iFlt - iClFirst + 1
@@ -196,8 +203,11 @@ c       (This changes the geometry of the source)
         do 860 iFltWidth=1,nWidth(iFlt)
 
 C         Initialize temp hazard array for this source
-          call S23_Init_tempHaz ( tempHaz )
-          call S23_Init_tempHaz1 ( tempHaz1 )
+C         (not used in the cluster probability pass)
+          if ( clPass .ne. 1 ) then
+            call S23_Init_tempHaz ( tempHaz )
+            call S23_Init_tempHaz1 ( tempHaz1 )
+          endif
 
 c        Set bottom of fault for standard faults (source type 1)
           if ( sourceType(iFlt) .eq. 1. ) then
@@ -618,7 +628,7 @@ c                    (cluster member: rate of the sequence times the allocation 
                      if (sourcetype(iFlt) .ne. 7) then
                        mHaz = rate(iParam,iFltWidth) * prock * p1 * probAct(iFlt)
                        if ( clPass .eq. 2 ) mHaz = mHaz
-     1                     * sClu(jInten,iProb,iAtten,iParam,iFtype,iFltWidth)
+     1                     * sMem(kMem,jInten,iProb,iAtten,iParam,iFtype,iFltWidth)
                        wt = wt *segwt1(iFLt)
                      elseif (sourcetype(iFlt) .eq. 7) then
                        mHaz = rateS7(iFlt,iMag) * prock * p1 * probAct(iFlt)
@@ -660,8 +670,11 @@ c                    Add to source deagg
 
 c                    Save Marginal Hazard to temp array for fractile output
 c                    This is for the total hazard fractiles
-                     tempHaz(iParam,jInten,iProb,iAtten,iFtype) = mHaz
-     1                        + tempHaz(iParam,jInten,iProb,iAtten,iFtype)
+c                    (not for a cluster member: its out1 blocks hold zeros, and the
+c                    cluster's curves are written after the last member)
+                     if ( clPass .ne. 2 )
+     1               tempHaz(iParam,jInten,iProb,iAtten,iFtype) = mHaz
+     2                        + tempHaz(iParam,jInten,iProb,iAtten,iFtype)
 
 c                    This is for the SSC hazard fractiles
                      tempHaz1(iParam,jInten,iProb,iFtype) = mHaz*gm_wt(iProb,jType,iAtten)
@@ -739,14 +752,9 @@ c           Set the weight for this set of parameters (epistemic)
 c        No out1 or out5 output in the cluster probability pass
          if ( clPass .eq. 1 ) goto 860
 
-c        Cluster: out1 holds the cluster's branch curves in the first member's
-c        block and zeros in the other members' blocks
-         if ( clPass .eq. 2 ) then
-           call S36_ClusterOut1 ( tempHaz, Pclu, kMem, iFlt, iFltWidth,
-     1          nParamVar, nInten, nProb, nAtten, attenType(iFlt), nFtype,
-     2          rate, probAct(iFlt), nClInten, nClAtten, nClParam,
-     3          nClFtype, nClWidth )
-         endif
+c        Cluster: the members' out1 blocks hold zeros (nothing is added to
+c        tempHaz in pass 2). The cluster's branch curves are written after the
+c        last member, one set for each segmentation model (S36_ClusterWriteOut1).
 
 c        Write temp Haz array to file
          call S21_WriteTempHaz ( PCflag, tempHaz, PC_D, nPC, nParamVar, nInten,
@@ -768,12 +776,17 @@ c       Write p1_sum as a check
 c       Cluster: after the last member, combine and start the contribution
 c       pass at the first member; after the contribution pass, release storage
         if ( clPass .eq. 1 .and. iFlt .eq. iClLast ) then
-          call S36_ClusterCombine ( Pmem, Pclu, sClu, nClMem, nClInten,
-     1         nProb, nClAtten, nClParam, nClFtype, nClWidth )
+          call S36_ClusterCombine ( Pmem, sMem, Pclu, iClFirst, nClMem,
+     1         nClInten, nProb, nClAtten, nClParam, nClFtype, nClWidth,
+     2         nClSeg, segModelFlag, segModelWt1, segWt1 )
           clPass = 2
           iFlt = iClFirst - 1
         elseif ( clPass .eq. 2 .and. iFlt .eq. iClLast ) then
-          deallocate ( Pmem, Pclu, sClu )
+          call S36_ClusterWriteOut1 ( Pclu, iClFirst, nFlt, iClV, nWidth,
+     1         nParamVar, nFtype, nAtten, attenType(iClFirst), nInten, nProb,
+     2         rate, probAct(iClFirst), nClInten, nClAtten, nClParam,
+     3         nClFtype, nClWidth, nClSeg )
+          deallocate ( Pmem, sMem, Pclu )
           clPass = 0
         endif
        goto 890

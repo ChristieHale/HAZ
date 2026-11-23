@@ -178,7 +178,7 @@ c  --------------------------------------------------------------------
       implicit none
       include 'pfrisk.h'
 
-      integer distmaxType(MAX_FLT), clusterID(MAX_FLT), nCluster, iFltFirst
+      integer distmaxType(MAX_FLT), clusterID(MAX_FLT), nCluster, iFltFirst, j
       integer synHWFlag(MAX_FLT,MAX_SYN), nsyn_Case(MAX_FLT),
      1        synjcalc(MAX_FLT), fltDirect(MAX_FLT), synchron(MAX_FLT),
      2        fIndex(3,MAX_FLT), nWidth(MAX_FLT), sourceType(MAX_FLT),
@@ -775,25 +775,41 @@ c          Check the input of a member of a clustered sequence (source type 8)
            if (clusterID(iFlt) .gt. 0) then
              call S36_CheckClusterMember ( iFlt, iFltFirst, fName, synchron,
      1            al_segWt, attenType, nWidth, nParamVar, nFtype, RateType,
-     2            rateParam, rateParamWt, magRecurWt, maxMagWt )
+     2            rateParam, rateParamWt, magRecurWt, maxMagWt, faultWidthWt,
+     3            ftype_wt )
            endif
 c     End loop over iFlt2 (# segments)
           enddo
 
-c         A clustered sequence has one segmentation model that includes every segment
+c         A clustered sequence: each segmentation model is one combination of
+c         members (for example one alternative geometry of each fault), and is
+c         combined as a cluster of its own. Every model must include a member,
+c         and every member must be in a model.
           if (clusterID(iFlt) .gt. 0) then
-            k = 0
-            if (nSegModel .eq. 1) then
-              do i=1,nFlt2
-                if (faultFlag(iFlt0,1,i) .eq. 1) k = k + 1
+            do i=1,nSegModel
+              k = 0
+              do j=1,nFlt2
+                k = k + faultFlag(iFlt0,i,j)
               enddo
-            endif
-            if (k .ne. nFlt2) then
-              write (*,'( 2x,''Flt file error: a clustered sequence (source type 8) needs one segmentation'')')
-              write (*,'( 2x,''model that includes every segment of its fault system'')')
-              write (*,'( 2x,''From fault system: '',a80)') fName1
-              stop 99
-            endif
+              if (k .eq. 0) then
+                write (*,'( 2x,''Flt file error: segmentation model'',i4,'' of a clustered sequence (source type 8)'')') i
+                write (*,'( 2x,''includes no segment'')')
+                write (*,'( 2x,''From fault system: '',a80)') fName1
+                stop 99
+              endif
+            enddo
+            do j=1,nFlt2
+              k = 0
+              do i=1,nSegModel
+                k = k + faultFlag(iFlt0,i,j)
+              enddo
+              if (k .eq. 0) then
+                write (*,'( 2x,''Flt file error: segment'',i4,'' of a clustered sequence (source type 8) is in no'')') j
+                write (*,'( 2x,''segmentation model'')')
+                write (*,'( 2x,''From fault system: '',a80)') fName1
+                stop 99
+              endif
+            enddo
             nCluster = nCluster + 1
           endif
 

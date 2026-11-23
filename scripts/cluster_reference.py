@@ -334,6 +334,71 @@ def cluster_deagg(gmm_runs, alpha, gm_weights, members, iprob):
     return out
 
 
+def member_branch_probabilities(out1_blocks, members, iprob, rates=None):
+    """P_k on every epistemic branch: array (K, nWidth, nAtten, nFtype, nParam, nInten).
+
+    The Members run has the members as ordinary sources; its out1 curve on
+    parameter branch p is rate_p * P_k, so rates (one per parameter branch,
+    the Members run's activity rates; default 1) are divided out.
+    """
+    by_key = {(b["iflt"], b["iwidth"], b["iprob"]): b["curves"] for b in out1_blocks}
+    n_width = max(b["iwidth"] for b in out1_blocks if b["iflt"] == members[0])
+    p = np.array([[by_key[iflt, w, iprob] for w in range(1, n_width + 1)] for iflt in members])
+    if rates is not None:
+        p = p / np.asarray(rates, dtype=float)[:, None]
+    return p
+
+
+def cluster_segmentation(p_members, flags, seg_weights):
+    """Cluster probability and allocation for each segmentation model.
+
+    p_members: (K, ...) member probabilities on every branch.
+    flags: (S, K) 0/1, the members each segmentation model includes.
+    Returns P_c (S, ...), s (S, ...), and each member's pass 2 factor (K, ...):
+    sum over the models that include k of w_s s_s, over the sum of those w_s.
+    """
+    p = np.asarray(p_members, dtype=float)
+    flags = np.asarray(flags)
+    w = np.asarray(seg_weights, dtype=float)
+    pc = np.array([cluster_probability(p[f == 1]) for f in flags])
+    s = np.array([allocation_factor(p[f == 1]) for f in flags])
+    factor = np.einsum("s,sk,s...->k...", w, flags, s) / (flags.T @ w).reshape((-1,) + (1,) * (p.ndim - 1))
+    return pc, s, factor
+
+
+def approximate_cluster_rate(p_members, flags, seg_weights, branch_weights, alpha_branch):
+    """The approximation of the other code (A2.3, A10): average each fault's
+    probability over its geometries and over every epistemic branch first,
+    then combine the faults once.
+
+    flags (S, K) give the faults implicitly: members that never appear in the
+    same model are geometries of one fault. branch_weights broadcasts against
+    p_members[k] (all branches, levels last); alpha_branch likewise.
+    """
+    p = np.asarray(p_members, dtype=float)
+    flags = np.asarray(flags)
+    w = np.asarray(seg_weights, dtype=float)
+    k_n = p.shape[0]
+    # Group members into faults: k and j are one fault if no model has both
+    fault_of = list(range(k_n))
+    for k in range(k_n):
+        for j in range(k):
+            if not np.any(flags[:, k] & flags[:, j]) and fault_of[j] == j:
+                fault_of[k] = j
+                break
+    faults = sorted(set(fault_of))
+    bw = np.broadcast_to(branch_weights, p.shape[1:])
+    axes = tuple(range(p.ndim - 2))
+    p_bar = []
+    for f in faults:
+        geoms = [k for k in range(k_n) if fault_of[k] == f]
+        # weight of each geometry: the total weight of the models that use it
+        gw = np.array([w[flags[:, k] == 1].sum() for k in geoms])
+        p_bar.append(sum(g * (bw * p[k]).sum(axis=axes) for g, k in zip(gw, geoms)))
+    alpha_mean = (np.broadcast_to(branch_weights, p.shape[1:]) * np.broadcast_to(alpha_branch, p.shape[1:])).sum(axis=axes)
+    return alpha_mean * cluster_probability(np.array(p_bar))
+
+
 def cluster_source_deagg(gmm_runs, gm_weights, members, iprob):
     """Allocated disaggregation of each member (out7) from one member run per GMM.
 

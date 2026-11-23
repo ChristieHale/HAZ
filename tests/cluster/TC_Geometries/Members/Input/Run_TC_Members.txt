@@ -1,0 +1,45 @@
+Source_TC_Members.txt
+45.4                        version of fault file
+30.0  45.0  -100.0  -80.0    min max lat long (grid sources only)
+1000.  1000.                 maxdist (types 1 and 2)
+Cluster test C members: NMS, RFT and NMN with two geometries each, thickness, rate, rupture-set and mechanism branches, as ordinary sources with rate 1
+2  1                        nProb, nAttenType
+0.0  3  0  0                 period, max epsilon, dir flag, pcflag
+18
+0.005  0.01  0.02  0.03  0.05  0.07  0.1  0.15  0.2  0.3  0.4  0.5  0.7  1  1.5  2  3  5
+2                           Number of GM Models for Atten Type 1
+102  0.0  0.0  0.5  0.0  0             jcalc, const1, const2, wt, SigVaradd, mixflag (Atkinson and Boore 2006, hard rock)
+120  0.0  0.0  0.5  0.0  0             jcalc, const1, const2, wt, SigVaradd, mixflag (Campbell 2003, hard rock)
+1.0  3  0  0                 period, max epsilon, dir flag, pcflag
+18
+0.001  0.002  0.005  0.007  0.01  0.015  0.02  0.03  0.05  0.07  0.1  0.15  0.2  0.3  0.5  0.7  1  2
+2                           Number of GM Models for Atten Type 1
+102  0.0  0.0  0.5  0.0  0             jcalc, const1, const2, wt, SigVaradd, mixflag (Atkinson and Boore 2006, hard rock)
+120  0.0  0.0  0.5  0.0  0             jcalc, const1, const2, wt, SigVaradd, mixflag (Campbell 2003, hard rock)
+0                           psCorFlag
+9                           Number of deag mag values
+6.4  6.6  6.8  7  7.2  7.4  7.6  7.8  8.2
+12                          Number of deag dist values
+0  10  20  30  50  75  100  150  200  250  300  1000
+6                           Number of deag eps values
+-10.  -2.  0.  1.  2.  10.
+4                           Number of deag dir values
+0.0  0.10  0.40  2.0
+0                           soil amp
+2                           nSites
+-90.05  35.15  2000.0  0.0  0.0  0.0  0.8  0   site 1: Memphis (lon, lat, Vs30, Z1.0, Z1.5, Z2.5, Vrup, FABA)
+TC_Members_Site1.out1
+TC_Members_Site1.out2
+TC_Members_Site1.out3
+TC_Members_Site1.out4
+TC_Members_Site1.out5
+TC_Members_Site1.out6
+TC_Members_Site1.out7
+-90.20  38.63  2000.0  0.0  0.0  0.0  0.8  0   site 2: St. Louis (lon, lat, Vs30, Z1.0, Z1.5, Z2.5, Vrup, FABA)
+TC_Members_Site2.out1
+TC_Members_Site2.out2
+TC_Members_Site2.out3
+TC_Members_Site2.out4
+TC_Members_Site2.out5
+TC_Members_Site2.out6
+TC_Members_Site2.out7

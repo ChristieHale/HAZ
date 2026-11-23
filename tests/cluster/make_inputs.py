@@ -30,18 +30,60 @@ SYSTEM_HEADER = """{name}
 """
 
 
+def fmt_list(values, spec):
+    return "  ".join(format(v, spec) for v in values)
+
+
 def member_block(name, trace, dip, ftype, mag_model, mpdf1, ref_mag, min_mag,
-                 step, n_area, sig_area, cluster=False):
+                 step, n_area, sig_area, cluster=False, rates=None,
+                 thick=None, ftypes=None):
+    """One segment. The optional lists give epistemic branches (Phase 5):
+    rates [(rate, wt)] (the rate of the sequence; 1 in the Members run),
+    ref_mag [(mag, wt)], thick [(km, wt)] and ftypes [(ftype, wt)]."""
     pts = "\n".join(f"{lon:.4f}  {lat:.4f}" for lon, lat in trace)
-    if cluster:
-        head = (f"{name}\n"
-                "8  1  1  1.0  0  0          source type (8 = cluster member), max dist type, atten type, sample step, dirflag, synflag\n")
-        rate = f"1.0  {ALPHA:.5e}  1.0           b-value (not used), activity rate = rate of the sequence, wt"
+    if rates is None:
+        if cluster:
+            head = (f"{name}\n"
+                    "8  1  1  1.0  0  0          source type (8 = cluster member), max dist type, atten type, sample step, dirflag, synflag\n")
+            rate = f"1.0  {ALPHA:.5e}  1.0           b-value (not used), activity rate = rate of the sequence, wt"
+        else:
+            head = SYSTEM_HEADER.format(name=name, n=1, flags="1") + (
+                f"{name}\n"
+                "1  1  1  1.0  0  0          source type, max dist type, atten type, sample step, dirflag, synflag\n")
+            rate = "1.0  1.0  1.0                 b-value (not used), activity rate = 1 (hazard = P(exceedance | earthquake)), wt"
+        n_rate = 1
     else:
-        head = SYSTEM_HEADER.format(name=name, n=1, flags="1") + (
-            f"{name}\n"
-            "1  1  1  1.0  0  0          source type, max dist type, atten type, sample step, dirflag, synflag\n")
-        rate = "1.0  1.0  1.0                 b-value (not used), activity rate = 1 (hazard = P(exceedance | earthquake)), wt"
+        if cluster:
+            head = (f"{name}\n"
+                    "8  1  1  1.0  0  0          source type (8 = cluster member), max dist type, atten type, sample step, dirflag, synflag\n")
+            rate = "\n".join(f"1.0  {r:.5e}  {w}           b-value (not used), activity rate = rate of the sequence, wt"
+                             for r, w in rates)
+        else:
+            head = SYSTEM_HEADER.format(name=name, n=1, flags="1") + (
+                f"{name}\n"
+                "1  1  1  1.0  0  0          source type, max dist type, atten type, sample step, dirflag, synflag\n")
+            rate = "\n".join(f"1.0  1.0  {w}                 b-value (not used), activity rate = 1, wt" for _, w in rates)
+        n_rate = len(rates)
+    if isinstance(ref_mag, (int, float)):
+        ref_mags = [(ref_mag, 1.0)]
+    else:
+        ref_mags = ref_mag
+    thick = thick or [(15.0, 1.0)]
+    ftypes = ftypes or [(ftype, 1.0)]
+    width_lines = (f"{len(thick)}                           Number of fault widths\n"
+                   f"{fmt_list([x for x, _ in thick], '.1f')}                          seismogenic thickness (km)\n"
+                   f"{fmt_list([w for _, w in thick], 'g')}                           wts for fault widths")
+    if len(thick) == 1:
+        width_lines = (f"1                           Number of fault widths\n"
+                       f"{thick[0][0]:.1f}                          seismogenic thickness (km)\n"
+                       f"1.0                           wts for fault widths")
+    refmag_one = (f"{len(ref_mags)}                           Number of ref mags\n"
+                  f"{fmt_list([m for m, _ in ref_mags], '.2f')}                          ref mag\n"
+                  f"{fmt_list([w for _, w in ref_mags], 'g') if len(ref_mags) > 1 else '1.0'}                           wts for ref mags")
+    refmag_lines = "\n".join([refmag_one] * len(thick))
+    ftype_lines = (f"{len(ftypes)}                           Number of fault mech\n"
+                   f"{fmt_list([f for f, _ in ftypes], '.1f')}                           fault mech\n"
+                   f"{fmt_list([w for _, w in ftypes], 'g') if len(ftypes) > 1 else '1.0'}                           wts for fault mech")
     return head + f"""1.0                         aleatory seg wt
 {dip:.1f}  0.0                   dip, depth to top
 {len(trace)}                           Number of long/lat pts
@@ -50,7 +92,7 @@ def member_block(name, trace, dip, ftype, mag_model, mpdf1, ref_mag, min_mag,
 0.0                           dip variations
 1.0                           wt for dip variations
 0                           Number of b-values
-1                           Number of act rates
+{n_rate}                           Number of act rates
 {rate}
 0.0  1.0  0.0  0.0          wts for sr, act. rate, rec int, MoRate branches
 0                           Number of slip-rates
@@ -60,21 +102,15 @@ def member_block(name, trace, dip, ftype, mag_model, mpdf1, ref_mag, min_mag,
 {mag_model}                             mag recur model
 1.0                           wts for mag recur model
 {mpdf1:.2f}  0.0  0.0                mpdf1, mpdf2, mpdf3
-1                           Number of fault widths
-15.0                          seismogenic thickness (km)
-1.0                           wts for fault widths
+{width_lines}
 0  0.0  0.0  0.0            Depth pdf model and params
-1                           Number of ref mags
-{ref_mag:.2f}                          ref mag
-1.0                           wts for ref mags
+{refmag_lines}
 {min_mag:.2f}  0.1  {step:.1f}  {step:.1f}  {n_area}  1  0.0    minmag, magstep, hxStep, hzStep, nRupArea, nRupWidth, minDepth
 -3.49  0.91  {sig_area:.2f}           rupArea coeff: a, b, sigma (log10 units; Wells and Coppersmith 1994, all)
 -1.01  0.32  0.0            rupWidth coeff: a, b, sigma (log10 units; Wells and Coppersmith 1994, all)
 1                           Number of fault mech models
 1.0                           wts for fault mech models
-1                           Number of fault mech
-{ftype:.1f}                           fault mech
-1.0                           wts for fault mech
+{ftype_lines}
 """
 
 
@@ -84,11 +120,22 @@ def fault_file(title, blocks):
             + "".join(blocks))
 
 
-def cluster_file(title, name, blocks):
+def cluster_file(title, name, blocks, seg_models=None):
+    """seg_models: [(weight, flags)], one per segmentation model (default: one
+    model with every segment)."""
+    if seg_models is None:
+        header = SYSTEM_HEADER.format(name=name, n=len(blocks), flags=" ".join("1" * len(blocks)))
+    else:
+        header = (f"{name}\n"
+                  "1.0                         Prob Activity\n"
+                  f"{len(seg_models)}                           Number of seg models\n"
+                  f"{fmt_list([w for w, _ in seg_models], 'g')}    wts for seg models\n"
+                  f"{len(blocks)}                           Number of segments\n"
+                  + "".join(" ".join(str(f) for f in flags) + "                 flags for seg model\n"
+                            for _, flags in seg_models))
     return (f"1                           iCoor (0=x,y 1=long,lat)\n"
             f"1                           Number of fault systems ({title})\n"
-            + SYSTEM_HEADER.format(name=name, n=len(blocks), flags=" ".join("1" * len(blocks)))
-            + "".join(blocks))
+            + header + "".join(blocks))
 
 
 def run_file(source, title, periods, sites, prefix, mag_bins, dist_bins):
@@ -129,17 +176,18 @@ def write(path, text):
         f.write(text)
 
 
-def write_case(case, tag, members, title, periods, sites, mag_bins, dist_bins):
+def write_case(case, tag, members, title, periods, sites, mag_bins, dist_bins, seg_models=None):
     """Write the Members and Cluster runs of one case.
 
     members: list of (name, member_block keyword arguments)
+    seg_models: segmentation models of the cluster [(weight, flags)]
     """
     for kind in ("Members", "Cluster"):
         cluster = kind == "Cluster"
         blocks = [member_block(name, cluster=cluster, **kw) for name, kw in members]
         source = f"Source_{tag}_{kind}.txt"
         if cluster:
-            text = cluster_file(f"cluster test {tag[-1]}: one clustered sequence", f"{tag} NMFS cluster", blocks)
+            text = cluster_file(f"cluster test {tag[-1]}: one clustered sequence", f"{tag} NMFS cluster", blocks, seg_models)
             run_title = f"Cluster test {tag[-1]}: {title}, as one clustered sequence (source type 8), rate {ALPHA:.5e}"
         else:
             text = fault_file(f"cluster test {tag[-1]} members, each run as an ordinary source with rate 1", blocks)
@@ -186,3 +234,55 @@ write_case(
     [(-90.05, 35.15, "Memphis"), (-90.20, 38.63, "St. Louis")],
     [6.4, 6.6, 6.8, 7.0, 7.2, 7.4, 7.6],
     [0.0, 10.0, 20.0, 30.0, 50.0, 75.0, 100.0, 150.0, 200.0, 250.0, 300.0, 1000.0])
+
+# ---- Test C: alternative geometries and epistemic branches (Phase 5) ---------
+# The six NMFS traces (NMFS_RLME.xls) as six segments; each segmentation model
+# picks one geometry of each fault (2 x 2 x 2 = 8 models, product weights).
+# Branches matched by index in every member: three thicknesses (13 / 15 / 17 km,
+# 0.3 / 0.5 / 0.2, HID Figure H-5.5-1 as corrected in June 2012), two rates of
+# the sequence (Poisson in-cluster, HID Table H-5.5-2) times two rupture sets
+# (sets 1 and 5 of HID Table H-5.5-1: each member's own magnitude, weights
+# 0.5 / 0.5), two mechanisms, and the two GMMs of test B.
+BA_BFZ = [(-90.3737, 35.5551), (-90.0972, 35.8038), (-89.4848, 36.2976)]
+RFT_L = [(-89.8981, 36.5691), (-89.5905, 36.5662), (-89.4377, 36.4647), (-89.4140, 36.3308),
+         (-89.3490, 36.2235), (-89.3000, 36.1500)]
+NMN_L = [(-89.6209, 36.5653), (-89.2882, 36.9946), (-89.0200, 37.2700)]
+RATES_TC = [(3.7e-3, 0.5), (1.4e-3, 0.5)]
+THICK_TC = [(13.0, 0.3), (15.0, 0.5), (17.0, 0.2)]
+FTYPES_TC = [(0.0, 0.5), (1.0, 0.5)]
+GEOMETRY_WEIGHTS_TC = ((0.6, 0.4), (0.7, 0.3), (0.7, 0.3))  # NMS, RFT, NMN
+
+
+def tc_member(trace, dip, sets, min_mag):
+    return dict(trace=trace, dip=dip, ftype=0.0, mag_model=8, mpdf1=0.5, ref_mag=sets,
+                min_mag=min_mag, step=2.0, n_area=3, sig_area=0.24, rates=RATES_TC,
+                thick=THICK_TC, ftypes=FTYPES_TC)
+
+
+NMS_SETS = [(7.9, 0.5), (6.9, 0.5)]
+RFT_SETS = [(7.8, 0.5), (7.3, 0.5)]
+NMN_SETS = [(7.6, 0.5), (7.0, 0.5)]
+seg_models_tc = []
+for i_nms, w_nms in enumerate(GEOMETRY_WEIGHTS_TC[0]):
+    for i_rft, w_rft in enumerate(GEOMETRY_WEIGHTS_TC[1]):
+        for i_nmn, w_nmn in enumerate(GEOMETRY_WEIGHTS_TC[2]):
+            flags = [0] * 6
+            flags[i_nms] = flags[2 + i_rft] = flags[4 + i_nmn] = 1
+            seg_models_tc.append((round(w_nms * w_rft * w_nmn, 6), flags))
+write_case(
+    "TC_Geometries", "TC",
+    [("TC_NMS_BA-BL", tc_member(BA_BL, 90.0, NMS_SETS, 6.65)),
+     ("TC_NMS_BA-BFZ", tc_member(BA_BFZ, 90.0, NMS_SETS, 6.65)),
+     ("TC_RFT_S", tc_member(RFT_S, 40.0, RFT_SETS, 7.05)),
+     ("TC_RFT_L", tc_member(RFT_L, 40.0, RFT_SETS, 7.05)),
+     ("TC_NMN_S", tc_member(NMN_S, 90.0, NMN_SETS, 6.75)),
+     ("TC_NMN_L", tc_member(NMN_L, 90.0, NMN_SETS, 6.75))],
+    "NMS, RFT and NMN with two geometries each, thickness, rate, rupture-set and mechanism branches",
+    [dict(T=0.0, eps=3, gmms=gmms_tb,
+          levels=[0.005, 0.01, 0.02, 0.03, 0.05, 0.07, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 5.0]),
+     dict(T=1.0, eps=3, gmms=gmms_tb,
+          levels=[0.001, 0.002, 0.005, 0.007, 0.01, 0.015, 0.02, 0.03, 0.05, 0.07, 0.1, 0.15, 0.2, 0.3, 0.5, 0.7, 1.0, 2.0])],
+    [(-90.05, 35.15, "Memphis"), (-90.20, 38.63, "St. Louis")],
+    [6.4, 6.6, 6.8, 7.0, 7.2, 7.4, 7.6, 7.8, 8.2],
+    [0.0, 10.0, 20.0, 30.0, 50.0, 75.0, 100.0, 150.0, 200.0, 250.0, 300.0, 1000.0],
+    seg_models=seg_models_tc)

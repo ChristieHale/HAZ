@@ -82,15 +82,15 @@ ERROR_CASES = {
     "mixed source types (first segment type 1)": (
         [(SOURCE_8, "1  1  1  1.0  0  0 ", 1)],
         "if one segment of a fault system is source type 8, all must be"),
-    "two segmentation models": (
+    "segmentation model with no segment": (
         [("1                           Number of seg models\n1.0                           wts for seg models\n"
           "3                           Number of segments\n1 1 1 ",
           "2                           Number of seg models\n0.5 0.5\n"
-          "3                           Number of segments\n1 1 1\n1 1 1 ", 1)],
-        "needs one segmentation"),
-    "segment left out of the segmentation model": (
+          "3                           Number of segments\n1 1 1\n0 0 0 ", 1)],
+        "includes no segment"),
+    "segment in no segmentation model": (
         [("1 1 1                             flags", "1 0 1                             flags", 1)],
-        "needs one segmentation"),
+        "is in no"),
     "aleatory segment weight": (
         [("1.0                         aleatory seg wt", "0.5                         aleatory seg wt", 2)],
         "aleatory segment weight of a cluster member"),
@@ -122,15 +122,15 @@ ERROR_CASES = {
          ("1                           Number of ref mags\n7.90                          ref mag\n"
           "1.0                           wts for ref mags\n",
           "1\n7.90\n1.0\n1\n7.90\n1.0\n", 1)],
-        "must have a single"),
+        "must have the same numbers"),
     "two reference magnitudes": (
         [("1                           Number of ref mags\n7.90                          ref mag\n"
           "1.0                           wts for ref mags\n", "2\n7.90  7.80\n0.5  0.5\n", 1)],
-        "must have a single"),
+        "must have the same numbers"),
     "two mechanisms": (
         [("1                           Number of fault mech\n0.0                           fault mech\n"
           "1.0                           wts for fault mech\n", "2\n0.0  1.0\n0.5  0.5\n", 1)],
-        "must have a single"),
+        "must have the same numbers"),
 }
 
 
@@ -164,3 +164,46 @@ def test_needs_45_4_format(tmp_path):
     code, out = run_haz(folder, "Run_TA_Cluster.txt")
     assert code == 99
     assert "source type 8 (clustered sequence) needs the 45.4 fault file format" in out
+
+
+THICK_1 = ("1                           Number of fault widths\n15.0                          seismogenic thickness (km)\n"
+           "1.0                           wts for fault widths\n")
+REFMAG = "1                           Number of ref mags\n{m}                          ref mag\n1.0                           wts for ref mags\n"
+
+
+def two_thicknesses(text, weights):
+    """Give every member two thicknesses (13 and 17 km) with the given weights;
+    each thickness needs its own reference-magnitude lines."""
+    assert text.count(THICK_1) == 3
+    for i, (w, mag) in enumerate(zip(weights, ("7.90", "7.80", "7.60"))):
+        text = text.replace(THICK_1, f"2\n13.0  17.0\n{w}\n", 1)
+        ref = REFMAG.format(m=mag)
+        text = text.replace(ref, ref + ref, 1)
+    return text
+
+
+def test_matched_branches_are_read(tmp_path):
+    """Every member with the same two thicknesses: read and run."""
+    folder = copy_case(TA, tmp_path / "case")
+    path = os.path.join(folder, "Source_TA_Cluster.txt")
+    with open(path) as f:
+        text = f.read()
+    with open(path, "w") as f:
+        f.write(two_thicknesses(text, ["0.4 0.6"] * 3))
+    code, out = run_haz(folder, "Run_TA_Cluster.txt")
+    assert code == 0, out
+    assert DONE in out
+    assert "Branches (matched in every member): width   2" in out
+
+
+def test_branch_weights_must_match(tmp_path):
+    folder = copy_case(TA, tmp_path / "case")
+    path = os.path.join(folder, "Source_TA_Cluster.txt")
+    with open(path) as f:
+        text = f.read()
+    with open(path, "w") as f:
+        f.write(two_thicknesses(text, ["0.4 0.6", "0.5 0.5", "0.4 0.6"]))
+    code, out = run_haz(folder, "Run_TA_Cluster.txt")
+    assert code == 99
+    assert "must have the same numbers" in out
+    assert DONE not in out
