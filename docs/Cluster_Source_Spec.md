@@ -142,7 +142,7 @@ HAZ stops with a clear message if any of these fails.
 
 | Rule | Reason |
 |---|---|
-| If any segment of a fault system is type 8, all of them must be | Keeps the first milestone simple; relaxed in Phase 6 (A9) |
+| The type 8 segments of a fault system are consecutive (Phase 6; until then, every segment of the system) | The members are one cluster; other segments of the system are ordinary (A9) |
 | Every segmentation model includes a member, and every member is in a model (Phase 5; until then, one model with all flags 1) | Each model is one combination of members, such as one geometry of each fault (A8) |
 | Each member has activity rates only: no slip rates, recurrence intervals or moment rates | α must be a rate of the sequence, not derived from fault area or slip. Recurrence interval is not handled for model 8 in `S31_Set_Rates` |
 | Identical activity-rate values and weights in every member | They are one rate |
@@ -359,7 +359,7 @@ HID Figure H-5.5-1 has three mutually exclusive top-level branches. They map ont
 
 Prob Activity of the system is then 1.0.
 
-This needs a fault system to hold both cluster members and ordinary segments; the first milestone forbids that (A3.2). Within a segmentation model:
+This needs a fault system to hold both cluster members and ordinary segments, which Phase 6 allows (A3.2). Within a segmentation model:
 - the flagged members combine as a cluster;
 - the flagged ordinary segments add as usual.
 
@@ -532,4 +532,10 @@ Agreed on November 22, 2026 (5 on November 23):
   - The reader records the members of clusters, and `Set_Cluster_Sources` numbers each cluster's segmentation models as extra sources after the last source (as in F3), with the first member's branches and weights, and sets the order of the sources in out1.
   - A cluster is sampled as one source: a segmentation model, then one width, rate-and-magnitude and mechanism branch, and that model's curve. out1 from HAZ before F3 stops with a message.
   - `Cluster_Test` (test B) is regenerated with F3. The new `Cluster_Geometries_Test` (test C) checks every fractile against the exact quantiles of the 384 branch curves (within 4 standard errors) and the mean against the exact mean.
+- **Phase 6, step 1: in- and out-of-cluster branches in one fault system (A9), HAZ:**
+  - A fault system may hold cluster members (type 8, consecutive segments) and ordinary segments. A segmentation model may include members, ordinary segments, both, or nothing (the "All Out" branch). Every member must be in a model.
+  - Nothing else changes in the calculation. A model with no member has P_c = 0; HAZ writes zero curves for it in out1, and it does not enter any member's pass 2 factor. Ordinary segments are integrated as usual, with their own segmentation weight.
+  - In out1 the cluster's blocks (one set per model) follow the last member, before any ordinary segment that comes after it.
+  - Test D (`tests/cluster/TD_InOut`): test C's cluster plus RFT-S and RFT-L as ordinary segments with out-of-cluster rates, in eleven models as in HID Figure H-5.5-1 (8 × 0.9 × geometry weight, 0.05 × 0.7 / 0.3 for RFT alone, 0.05 for no activity). `scripts/test_cluster_inout.py` checks out1 (members, every model's cluster blocks, ordinary segments) and the out3 total and every source's share against the reference tool.
+  - `MAX_ATTEN` is raised from 100 to 120, for the 102 GMMs of the CEUS rev23 run file (the rev22 and rev23 runs used a build with larger limits).
 

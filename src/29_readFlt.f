@@ -178,7 +178,7 @@ c  --------------------------------------------------------------------
       implicit none
       include 'pfrisk.h'
 
-      integer distmaxType(MAX_FLT), clusterID(MAX_FLT), nCluster, iFltFirst, j
+      integer distmaxType(MAX_FLT), clusterID(MAX_FLT), nCluster, iFltFirst, j, iMemFirst
       integer synHWFlag(MAX_FLT,MAX_SYN), nsyn_Case(MAX_FLT),
      1        synjcalc(MAX_FLT), fltDirect(MAX_FLT), synchron(MAX_FLT),
      2        fIndex(3,MAX_FLT), nWidth(MAX_FLT), sourceType(MAX_FLT),
@@ -304,21 +304,27 @@ c       max distance type (1 or 2, selects the max distance given in the run fil
           stop 99
         endif
 
-c       Source type 8 is a member of a clustered earthquake sequence: all of the
-c       segments of its fault system occur together, with one rate. Its input is
+c       Source type 8 is a member of a clustered earthquake sequence: the
+c       members of a fault system occur together, with one rate. Its input is
 c       the same as source type 1, so it is stored as source type 1 with the
-c       number of its cluster.
-        iFltFirst = iFlt - iflt2 + 1
+c       number of its cluster. A fault system may also hold ordinary segments
+c       (for example an out-of-cluster alternative); the members must be
+c       consecutive segments. iFltFirst is the first member.
+        if (iflt2 .eq. 1) iMemFirst = 0
         clusterID(iFlt) = 0
         if (sourceType(iFlt) .eq. 8) then
           sourceType(iFlt) = 1
           clusterID(iFlt) = nCluster + 1
+          if (iMemFirst .eq. 0) then
+            iMemFirst = iFlt
+          elseif (clusterID(iFlt-1) .eq. 0) then
+            write (*,'( 2x,''Flt file error: the members (source type 8) of a fault system must be consecutive'')')
+            write (*,'( 2x,''segments'')')
+            write (*,'( 2x,''From fault segment: '',a80)') fName(iFlt)
+            stop 99
+          endif
         endif
-        if ( (clusterID(iFlt) .gt. 0) .neqv. (clusterID(iFltFirst) .gt. 0) ) then
-          write (*,'( 2x,''Flt file error: if one segment of a fault system is source type 8, all must be'')')
-          write (*,'( 2x,''From fault segment: '',a80)') fName(iFlt)
-          stop 99
-        endif
+        iFltFirst = iMemFirst
 
 c       Now read in the synchronous rupture case parameters if needed.
         if (synchron(iFlt) .gt. 0) then
@@ -783,22 +789,13 @@ c     End loop over iFlt2 (# segments)
 
 c         A clustered sequence: each segmentation model is one combination of
 c         members (for example one alternative geometry of each fault), and is
-c         combined as a cluster of its own. Every model must include a member,
-c         and every member must be in a model.
-          if (clusterID(iFlt) .gt. 0) then
-            do i=1,nSegModel
-              k = 0
-              do j=1,nFlt2
-                k = k + faultFlag(iFlt0,i,j)
-              enddo
-              if (k .eq. 0) then
-                write (*,'( 2x,''Flt file error: segmentation model'',i4,'' of a clustered sequence (source type 8)'')') i
-                write (*,'( 2x,''includes no segment'')')
-                write (*,'( 2x,''From fault system: '',a80)') fName1
-                stop 99
-              endif
-            enddo
+c         combined as a cluster of its own; the ordinary segments it includes add
+c         to the hazard as usual. A model may include no member (an
+c         out-of-cluster alternative), or no segment at all (no activity). Every
+c         member must be in a model.
+          if (iMemFirst .gt. 0) then
             do j=1,nFlt2
+              if (clusterID(iFlt-nFlt2+j) .eq. 0) goto 810
               k = 0
               do i=1,nSegModel
                 k = k + faultFlag(iFlt0,i,j)
@@ -809,6 +806,7 @@ c         and every member must be in a model.
                 write (*,'( 2x,''From fault system: '',a80)') fName1
                 stop 99
               endif
+ 810          continue
             enddo
             nCluster = nCluster + 1
           endif

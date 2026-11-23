@@ -76,18 +76,9 @@ def test_valid_cluster_is_read(tmp_path, case, run_name, names):
 
 
 ERROR_CASES = {
-    "mixed source types (second segment type 1)": (
+    "members not consecutive (second segment type 1)": (
         [(SOURCE_8, "1  1  1  1.0  0  0 ", 2)],
-        "if one segment of a fault system is source type 8, all must be"),
-    "mixed source types (first segment type 1)": (
-        [(SOURCE_8, "1  1  1  1.0  0  0 ", 1)],
-        "if one segment of a fault system is source type 8, all must be"),
-    "segmentation model with no segment": (
-        [("1                           Number of seg models\n1.0                           wts for seg models\n"
-          "3                           Number of segments\n1 1 1 ",
-          "2                           Number of seg models\n0.5 0.5\n"
-          "3                           Number of segments\n1 1 1\n0 0 0 ", 1)],
-        "includes no segment"),
+        "must be consecutive"),
     "segment in no segmentation model": (
         [("1 1 1                             flags", "1 0 1                             flags", 1)],
         "is in no"),
@@ -207,3 +198,24 @@ def test_branch_weights_must_match(tmp_path):
     assert code == 99
     assert "must have the same numbers" in out
     assert DONE not in out
+
+
+VALID_CASES = {
+    # An ordinary segment in the cluster's fault system (Phase 6, A9)
+    "ordinary segment before the members": [(SOURCE_8, "1  1  1  1.0  0  0 ", 1)],
+    # A segmentation model with no segment ("All Out")
+    "segmentation model with no segment": [
+        ("1                           Number of seg models\n1.0                           wts for seg models\n"
+         "3                           Number of segments\n1 1 1 ",
+         "2                           Number of seg models\n0.5 0.5\n"
+         "3                           Number of segments\n1 1 1\n0 0 0 ", 1)],
+}
+
+
+@pytest.mark.parametrize("label", sorted(VALID_CASES))
+def test_valid_variant(tmp_path, label):
+    folder = copy_case(TA, tmp_path / "case")
+    edit(os.path.join(folder, "Source_TA_Cluster.txt"), *VALID_CASES[label])
+    code, out = run_haz(folder, "Run_TA_Cluster.txt")
+    assert code == 0, out
+    assert DONE in out

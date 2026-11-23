@@ -36,10 +36,12 @@ def fmt_list(values, spec):
 
 def member_block(name, trace, dip, ftype, mag_model, mpdf1, ref_mag, min_mag,
                  step, n_area, sig_area, cluster=False, rates=None,
-                 thick=None, ftypes=None):
+                 thick=None, ftypes=None, ordinary=False):
     """One segment. The optional lists give epistemic branches (Phase 5):
     rates [(rate, wt)] (the rate of the sequence; 1 in the Members run),
-    ref_mag [(mag, wt)], thick [(km, wt)] and ftypes [(ftype, wt)]."""
+    ref_mag [(mag, wt)], thick [(km, wt)] and ftypes [(ftype, wt)].
+    ordinary: in the Cluster run, an ordinary segment (type 1, its own rates)
+    in the cluster's fault system (Phase 6, A9)."""
     pts = "\n".join(f"{lon:.4f}  {lat:.4f}" for lon, lat in trace)
     if rates is None:
         if cluster:
@@ -53,7 +55,11 @@ def member_block(name, trace, dip, ftype, mag_model, mpdf1, ref_mag, min_mag,
             rate = "1.0  1.0  1.0                 b-value (not used), activity rate = 1 (hazard = P(exceedance | earthquake)), wt"
         n_rate = 1
     else:
-        if cluster:
+        if cluster and ordinary:
+            head = (f"{name}\n"
+                    "1  1  1  1.0  0  0          source type (ordinary segment in the cluster's fault system), max dist type, atten type, sample step, dirflag, synflag\n")
+            rate = "\n".join(f"1.0  {r:.5e}  {w}           b-value (not used), activity rate, wt" for r, w in rates)
+        elif cluster:
             head = (f"{name}\n"
                     "8  1  1  1.0  0  0          source type (8 = cluster member), max dist type, atten type, sample step, dirflag, synflag\n")
             rate = "\n".join(f"1.0  {r:.5e}  {w}           b-value (not used), activity rate = rate of the sequence, wt"
@@ -286,3 +292,43 @@ write_case(
     [6.4, 6.6, 6.8, 7.0, 7.2, 7.4, 7.6, 7.8, 8.2],
     [0.0, 10.0, 20.0, 30.0, 50.0, 75.0, 100.0, 150.0, 200.0, 250.0, 300.0, 1000.0],
     seg_models=seg_models_tc)
+
+
+# ---- Test D: a fault system with in- and out-of-cluster branches (Phase 6) ---
+# Test C's six members, plus RFT-S and RFT-L as ordinary segments (type 1) in
+# the same fault system, as in HID Figure H-5.5-1: eleven segmentation models,
+# the eight geometry combinations of the cluster ("All In", 0.9 x the geometry
+# weight), RFT-S or RFT-L alone ("All Out Except RFT", 0.05 x 0.7 / 0.3), and
+# a model with no segment ("All Out", 0.05). The ordinary RFT segments have
+# out-of-cluster rates (HID Table H-5.5-6) and the RFT magnitudes of rupture
+# sets 1 and 5.
+RATES_TD_OUT = [(7.2e-4, 0.5), (2.2e-4, 0.5)]
+
+
+def td_rft(trace):
+    kw = tc_member(trace, 40.0, RFT_SETS, 7.05)
+    kw.update(rates=RATES_TD_OUT, ordinary=True)
+    return kw
+
+
+seg_models_td = [(round(0.9 * w, 6), flags + [0, 0]) for w, flags in seg_models_tc]
+seg_models_td += [(0.035, [0] * 6 + [1, 0]), (0.015, [0] * 6 + [0, 1]), (0.05, [0] * 8)]
+write_case(
+    "TD_InOut", "TD",
+    [("TD_NMS_BA-BL", tc_member(BA_BL, 90.0, NMS_SETS, 6.65)),
+     ("TD_NMS_BA-BFZ", tc_member(BA_BFZ, 90.0, NMS_SETS, 6.65)),
+     ("TD_RFT_S", tc_member(RFT_S, 40.0, RFT_SETS, 7.05)),
+     ("TD_RFT_L", tc_member(RFT_L, 40.0, RFT_SETS, 7.05)),
+     ("TD_NMN_S", tc_member(NMN_S, 90.0, NMN_SETS, 6.75)),
+     ("TD_NMN_L", tc_member(NMN_L, 90.0, NMN_SETS, 6.75)),
+     ("TD_RFT_S_out", td_rft(RFT_S)),
+     ("TD_RFT_L_out", td_rft(RFT_L))],
+    "test C plus RFT out of cluster and no activity, as segmentation models of one fault system",
+    [dict(T=0.0, eps=3, gmms=gmms_tb,
+          levels=[0.005, 0.01, 0.02, 0.03, 0.05, 0.07, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0, 5.0]),
+     dict(T=1.0, eps=3, gmms=gmms_tb,
+          levels=[0.001, 0.002, 0.005, 0.007, 0.01, 0.015, 0.02, 0.03, 0.05, 0.07, 0.1, 0.15, 0.2, 0.3, 0.5, 0.7, 1.0, 2.0])],
+    [(-90.05, 35.15, "Memphis"), (-90.20, 38.63, "St. Louis")],
+    [6.4, 6.6, 6.8, 7.0, 7.2, 7.4, 7.6, 7.8, 8.2],
+    [0.0, 10.0, 20.0, 30.0, 50.0, 75.0, 100.0, 150.0, 200.0, 250.0, 300.0, 1000.0],
+    seg_models=seg_models_td)

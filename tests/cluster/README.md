@@ -102,6 +102,15 @@ The Members run has activity rate 1 on every branch, so each out1 curve is
 P_k on that branch. Two periods (PGA and 1.0 s), two sites (Memphis and St.
 Louis).
 
+### TD_InOut
+
+In- and out-of-cluster branches in one fault system (Phase 6). Test C's six
+members plus RFT-S and RFT-L as ordinary segments (type 1) with out-of-cluster
+rates (3 thicknesses, 2 rates × 2 rupture sets, 2 mechanisms), and eleven
+segmentation models as in HID Figure H-5.5-1: the eight geometry combinations
+of the cluster at 0.9 × the geometry weight, RFT-S or RFT-L alone at
+0.05 × 0.7 / 0.3, and no segment at 0.05.
+
 ## Commands
 
 From `scripts/`:
@@ -132,6 +141,9 @@ HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_deagg.py
 
 # Branches and segmentation models: test C
 HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_branches.py
+
+# In- and out-of-cluster branches in one fault system: test D
+HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_inout.py
 ```
 
 `test_cluster_deagg.py` checks the Cluster runs' out3 member shares, out4 bins
