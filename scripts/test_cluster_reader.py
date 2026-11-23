@@ -55,7 +55,7 @@ def edit(path, *changes):
 
 
 SOURCE_8 = "8  1  1  1.0  0  0 "
-NOT_YET = "for clusters is not implemented yet"
+DONE = "Normal termination"
 
 
 @pytest.mark.parametrize("case, run_name, names", [
@@ -65,14 +65,14 @@ NOT_YET = "for clusters is not implemented yet"
 def test_valid_cluster_is_read(tmp_path, case, run_name, names):
     folder = copy_case(case, tmp_path / "case")
     code, out = run_haz(folder, run_name)
-    assert code == 99
-    assert NOT_YET in out
+    assert code == 0
+    assert DONE in out
     assert "Clustered earthquake sequences (source type 8):    1" in out
     assert "Rate of the sequence (/yr):  0.26570E-02" in out
     for name in names:
         assert name in out
     with open(os.path.join(folder, run_name + ".log"), errors="replace") as f:
-        assert NOT_YET in f.read()
+        assert "Clustered earthquake sequences (source type 8):    1" in f.read()
 
 
 ERROR_CASES = {
@@ -142,7 +142,7 @@ def test_rule(tmp_path, label):
     code, out = run_haz(folder, "Run_TA_Cluster.txt")
     assert code == 99
     assert message in out
-    assert NOT_YET not in out
+    assert DONE not in out
 
 
 def test_pc_method(tmp_path):

@@ -1,6 +1,6 @@
 # Clustered Earthquake Sequences in HAZ (Source Type 8)
 
-Specification and implementation plan, **draft for review**. No code has been changed yet.
+Specification and implementation plan. See the Status section at the end for the phases done.
 
 Branch: `cluster_implementation`
 
@@ -494,3 +494,10 @@ Still open: whether "the disaggregation code" includes the companion UHS_deagg p
   - The Cluster runs of tests A and B (`tests/cluster/*/Cluster`), written by `tests/cluster/make_inputs.py`. The test runner skips them until Phase 2 adds their reference outputs.
   - `scripts/test_cluster_reader.py` runs HAZ on them and on one variant per rule.
   - There is no fixed limit on the number of members; the Phase 2 storage will be sized when the cluster is reached.
+- **Phase 2 (done):**
+  - The two-pass loop over a cluster's members is in `src/01_HAZ_MAIN2.f`; the sizing, the combination and the out1 curves are in `src/36_Cluster.f`.
+  - The storage (`Pmem`, `Pclu`, `sClu`) is allocated when the first member is reached, from the cluster's numbers of members, levels, periods, GMMs and branches, and released after pass 2.
+  - P_c is built up one member at a time as P_c + P_k (1 − P_c). This keeps small probabilities without the round-off of 1 − Π(1 − P_k).
+  - out1 follows F1 (A7), written from Phase 2 on so that out1 is never in an interim form.
+  - `scripts/test_cluster_hazard.py` has the Phase 2 tests. The Cluster runs of tests A and B now have reference outputs, and the test runner no longer skips them.
+  - Two log-file formats in `src/21_FRISK_IO.f` lacked a comma (`2xi8`, `2xa80`). gfortran 16 stops on them at run time, so they were fixed first, in a separate commit; the output is unchanged.

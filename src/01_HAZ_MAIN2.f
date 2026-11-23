@@ -6,6 +6,16 @@ c     Probabilisitic Seismic Hazard Program (PSHA)
       include 'pfrisk.h'
       include 'declare1.h'
 
+c     Clustered sequences (source type 8), see 36_Cluster.f:
+c       clPass   0 = ordinary source, 1 = probability pass, 2 = contribution pass
+c       Pmem     member exceedance probabilities P_k (pass 1)
+c       Pclu     cluster probability P_c = 1 - prod_k (1 - P_k)
+c       sClu     allocation factor s = P_c / sum_k P_k (pass 2)
+      real*8, allocatable :: Pmem(:,:,:,:,:,:,:), Pclu(:,:,:,:,:,:),
+     1                       sClu(:,:,:,:,:,:)
+      integer clPass, iClFirst, iClLast, kMem, nClMem, nClInten,
+     1        nClAtten, nClParam, nClFtype, nClWidth
+
 c     Write Program information to the screen.
       write (*,*) '*********************************'
       write (*,*) '*      Seismic Hazard Code      *'
@@ -142,11 +152,38 @@ C      Initialize temp hazard array for GM sensitivity
        call S23_Init_tempHaz2 ( tempHaz2 )
 
 c      Sum Over Number of sources
-       do 900 iFlt = 1, nFlt
+c      The members of a cluster (source type 8) are processed twice: pass 1
+c      computes each member's exceedance probability, and pass 2 adds the
+c      members' contributions with the allocation factor (see 36_Cluster.f).
+       clPass = 0
+       iFlt = 0
+ 890   iFlt = iFlt + 1
+       if ( iFlt .gt. nFlt ) goto 901
+
+c       First member of a cluster: start the probability pass
+        if ( clusterID(iFlt) .gt. 0 .and. clPass .eq. 0 ) then
+          clPass = 1
+          iClFirst = iFlt
+          iClLast = iFlt
+          do while ( iClLast .lt. nFlt )
+            if ( clusterID(iClLast+1) .ne. clusterID(iFlt) ) exit
+            iClLast = iClLast + 1
+          enddo
+          call S36_ClusterSize ( iClFirst, iClLast, nProb, nInten,
+     1         nAtten, attenType, nParamVar, nFtype, nWidth, nClMem,
+     2         nClInten, nClAtten, nClParam, nClFtype, nClWidth )
+          allocate ( Pmem(nClMem,nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth),
+     1               Pclu(nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth),
+     2               sClu(nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth) )
+          Pmem = 0.0d0
+        endif
+        if ( clPass .gt. 0 ) kMem = iFlt - iClFirst + 1
+
         write (*,'(2x,''Site = '',i4,'', '',''iFlt ='',4i5)') iSite, iFlt, nFlt, sourceType(iFlt), ibnum
 
 c       Write fault width weights to output2 file
-        write (17,'( 20f10.6)') (faultWidthWt(iFlt,iWidth),iWidth=1,nWidth(iFlt))
+        if ( clPass .ne. 1 )
+     1  write (17,'( 20f10.6)') (faultWidthWt(iFlt,iWidth),iWidth=1,nWidth(iFlt))
 
 c       Initialize p1_sum (check of the integration over all source pdfs)
         p1_sum = 0.
@@ -183,7 +220,7 @@ c        Turn fault into a grid
      4               fltGrid_z1, fltGrid_x2, fltGrid_y2, fltGrid_z2, fltGrid_x3,
      5               fltGrid_y3, fltGrid_z3, fltGrid_x4, fltGrid_y4, fltGrid_z4 )
          endif
-         if ( sourceType(iFlt) .eq. 1 .or. sourceType(iFlt) .eq. 5 )
+         if ( (sourceType(iFlt) .eq. 1 .or. sourceType(iFlt) .eq. 5) .and. clPass .ne. 1 )
      1      write (18,'( 2x,''fault area (km^2) = '',e12.3)') faultArea
 
 c        Set Sampling of Rupture Area and Rupture Width Distributions
@@ -235,7 +272,7 @@ c         Echo magnitude integration step over magnitude to the screen
 c         as a check of the programs progress.
           if (sourceType(iFlt) .ne. 7) then
             write (*,'( 2x,2I5,f10.3)') iflt, ifltWidth, mag
-            write (18,'( 2x,2I5,f10.3)') iflt, ifltWidth, mag
+            if ( clPass .ne. 1 ) write (18,'( 2x,2I5,f10.3)') iflt, ifltWidth, mag
           elseif (sourceType(iFlt) .eq. 7) then
             nn10000 = (iMag/10000)*10000
             if (nn10000 .eq. iMag) then
@@ -565,12 +602,23 @@ c                    Sum up probability (w/o ground motion) as a check
                        endif
                      endif
 
+c                    Cluster probability pass: add to the member's exceedance
+c                    probability only (no rate, no Prob Activity, no output)
+                     if ( clPass .eq. 1 ) then
+                       Pmem(kMem,jInten,iProb,iAtten,iParam,iFtype,iFltWidth) =
+     1                   Pmem(kMem,jInten,iProb,iAtten,iParam,iFtype,iFltWidth) + p1*prock
+                       goto 500
+                     endif
+
 c                    Add weight for aleatory rupture segmentation
                      wt = wt * al_segWt(iFlt)
 
 c                    Compute Marginal Rate of Occurance
+c                    (cluster member: rate of the sequence times the allocation factor)
                      if (sourcetype(iFlt) .ne. 7) then
                        mHaz = rate(iParam,iFltWidth) * prock * p1 * probAct(iFlt)
+                       if ( clPass .eq. 2 ) mHaz = mHaz
+     1                     * sClu(jInten,iProb,iAtten,iParam,iFtype,iFltWidth)
                        wt = wt *segwt1(iFLt)
                      elseif (sourcetype(iFlt) .eq. 7) then
                        mHaz = rateS7(iFlt,iMag) * prock * p1 * probAct(iFlt)
@@ -657,6 +705,9 @@ c                     Sum up the weighted PC coeff for each PC Coeff
  700       continue
  750      continue
 
+c         No out2 output in the cluster probability pass
+          if ( clPass .eq. 1 ) goto 800
+
 c         Compute the rate for this magnitude for each epistemic parameter variation
           do iParam=1,nParamVar(iFlt,iFltWidth)
             rout(iParam,iFltWidth) = (rate(iParam,iFltWidth)*pmag(iParam,iFltWidth))
@@ -685,6 +736,18 @@ c           Set the weight for this set of parameters (epistemic)
 
  850     MinRrup(iFlt) = MinRrup_temp
 
+c        No out1 or out5 output in the cluster probability pass
+         if ( clPass .eq. 1 ) goto 860
+
+c        Cluster: out1 holds the cluster's branch curves in the first member's
+c        block and zeros in the other members' blocks
+         if ( clPass .eq. 2 ) then
+           call S36_ClusterOut1 ( tempHaz, Pclu, kMem, iFlt, iFltWidth,
+     1          nParamVar, nInten, nProb, nAtten, attenType(iFlt), nFtype,
+     2          rate, probAct(iFlt), nClInten, nClAtten, nClParam,
+     3          nClFtype, nClWidth )
+         endif
+
 c        Write temp Haz array to file
          call S21_WriteTempHaz ( PCflag, tempHaz, PC_D, nPC, nParamVar, nInten,
      1                nProb, nAtten, iFlt, attenType(iFlt), nFtype, iFltWidth, nWidth )
@@ -695,10 +758,26 @@ c        Write temp Haz array to file
  860    continue
 
 c       Write p1_sum as a check
-        write (*,'( 2x,'' Site = '',i5,2x,'' iFlt = '',i5,'' p1sum ='',f10.5, i5)') iSite, iflt, p1_sum, nFLt
-        pdfsum(iFlt) = p1_sum
+        if ( clPass .ne. 1 ) then
+          write (*,'( 2x,'' Site = '',i5,2x,'' iFlt = '',i5,'' p1sum ='',f10.5, i5)') iSite, iflt, p1_sum, nFLt
+          pdfsum(iFlt) = p1_sum
+        endif
 
  900   continue
+
+c       Cluster: after the last member, combine and start the contribution
+c       pass at the first member; after the contribution pass, release storage
+        if ( clPass .eq. 1 .and. iFlt .eq. iClLast ) then
+          call S36_ClusterCombine ( Pmem, Pclu, sClu, nClMem, nClInten,
+     1         nProb, nClAtten, nClParam, nClFtype, nClWidth )
+          clPass = 2
+          iFlt = iClFirst - 1
+        elseif ( clPass .eq. 2 .and. iFlt .eq. iClLast ) then
+          deallocate ( Pmem, Pclu, sClu )
+          clPass = 0
+        endif
+       goto 890
+ 901   continue
 
        close (11) !out1
        close (17) !out2

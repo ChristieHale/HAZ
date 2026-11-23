@@ -171,11 +171,145 @@ c         First member: the cluster's fault system and the rate of the sequence
         write (iUnit,*)
       enddo
 
-c     The hazard calculation for clusters is not implemented yet
-      write (*,'( 2x,''Source type 8 (clustered sequence) is read, but the hazard calculation'')')
-      write (*,'( 2x,''for clusters is not implemented yet.'')')
-      write (18,'( 2x,''Source type 8 (clustered sequence) is read, but the hazard calculation'')')
-      write (18,'( 2x,''for clusters is not implemented yet.'')')
-      stop 99
+      return
+      end
 
+c ----------------------------------------------------------------------
+
+      subroutine S36_ClusterSize ( iClFirst, iClLast, nProb, nInten,
+     1           nAtten, attenType, nParamVar, nFtype, nWidth, nClMem,
+     2           nClInten, nClAtten, nClParam, nClFtype, nClWidth )
+
+c     Dimensions of the storage for one cluster (members iClFirst to
+c     iClLast): numbers of members, test levels, GMMs and epistemic branches.
+
+      implicit none
+      include 'pfrisk.h'
+
+      integer iClFirst, iClLast, nProb, nInten(MAX_PROB), nAtten(MAX_PROB,4),
+     1        attenType(MAX_FLT), nParamVar(MAX_FLT,MAX_WIDTH),
+     2        nFtype(MAX_FLT), nWidth(MAX_FLT), nClMem, nClInten, nClAtten,
+     3        nClParam, nClFtype, nClWidth
+
+      integer iFlt, iProb, iWidth
+
+      nClMem = iClLast - iClFirst + 1
+      nClInten = 1
+      nClAtten = 1
+      do iProb=1,nProb
+        nClInten = max( nClInten, nInten(iProb) )
+        nClAtten = max( nClAtten, nAtten(iProb,attenType(iClFirst)) )
+      enddo
+      nClParam = 1
+      nClFtype = 1
+      nClWidth = 1
+      do iFlt=iClFirst,iClLast
+        nClFtype = max( nClFtype, nFtype(iFlt) )
+        nClWidth = max( nClWidth, nWidth(iFlt) )
+        do iWidth=1,nWidth(iFlt)
+          nClParam = max( nClParam, nParamVar(iFlt,iWidth) )
+        enddo
+      enddo
+
+      return
+      end
+
+c ----------------------------------------------------------------------
+
+      subroutine S36_ClusterCombine ( Pmem, Pclu, sClu, nClMem, nClInten,
+     1           nProb, nClAtten, nClParam, nClFtype, nClWidth )
+
+c     Combines the members' exceedance probabilities on each epistemic
+c     branch and test level:
+c
+c        P_c = 1 - prod_k ( 1 - P_k )
+c        s   = P_c / sum_k P_k          (s = 1 when sum_k P_k = 0)
+c
+c     P_c is built up one member at a time as P_c + P_k (1 - P_c). This
+c     form only adds non-negative terms, so it keeps probabilities far
+c     below the round-off of 1 - P_k, and it tends to 1 as the P_k do.
+c     Contributions in pass 2 are scaled by s, so on every branch the
+c     members' contributions add up to alpha * ProbAct * P_c.
+
+      implicit none
+
+      integer nClMem, nClInten, nProb, nClAtten, nClParam, nClFtype, nClWidth
+      real*8 Pmem(nClMem,nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth),
+     1       Pclu(nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth),
+     2       sClu(nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth)
+
+      integer k, j, iProb, iAtten, iParam, iFtype, iWidth
+      real*8 Pk, Pc, sumP
+
+      do iWidth=1,nClWidth
+       do iFtype=1,nClFtype
+        do iParam=1,nClParam
+         do iAtten=1,nClAtten
+          do iProb=1,nProb
+           do j=1,nClInten
+             Pc = 0.0d0
+             sumP = 0.0d0
+             do k=1,nClMem
+               Pk = min( max( Pmem(k,j,iProb,iAtten,iParam,iFtype,iWidth), 0.0d0 ), 1.0d0 )
+               sumP = sumP + Pk
+               Pc = Pc + Pk * ( 1.0d0 - Pc )
+             enddo
+             Pclu(j,iProb,iAtten,iParam,iFtype,iWidth) = Pc
+             if ( sumP .gt. 0.0d0 ) then
+               sClu(j,iProb,iAtten,iParam,iFtype,iWidth) = Pc / sumP
+             else
+               sClu(j,iProb,iAtten,iParam,iFtype,iWidth) = 1.0d0
+             endif
+           enddo
+          enddo
+         enddo
+        enddo
+       enddo
+      enddo
+
+      return
+      end
+
+c ----------------------------------------------------------------------
+
+      subroutine S36_ClusterOut1 ( tempHaz, Pclu, kMem, iFlt, iFltWidth,
+     1           nParamVar, nInten, nProb, nAtten, jType, nFtype, rate,
+     2           probAct1, nClInten, nClAtten, nClParam, nClFtype, nClWidth )
+
+c     Sets the out1 curves of a cluster member (convention F1 in
+c     docs/Cluster_Source_Spec.md, section A7). The first member's block
+c     holds the cluster's branch curves, alpha * ProbAct * P_c, and the
+c     other members' blocks hold zeros. Each branch of the cluster is then
+c     one draw in the fractile program.
+
+      implicit none
+      include 'pfrisk.h'
+
+      integer kMem, iFlt, iFltWidth, nParamVar(MAX_FLT,MAX_WIDTH),
+     1        nInten(MAX_PROB), nProb, nAtten(MAX_PROB,4), jType,
+     2        nFtype(MAX_FLT), nClInten, nClAtten, nClParam, nClFtype, nClWidth
+      real rate(MAXPARAM,MAX_WIDTH), probAct1
+      real*8 tempHaz(MAXPARAM,MAX_INTEN,MAX_PROB,MAX_ATTEN,MAX_FTYPE),
+     1       Pclu(nClInten,nProb,nClAtten,nClParam,nClFtype,nClWidth)
+
+      integer j, iProb, iAtten, iParam, iFtype
+
+      do iProb=1,nProb
+        do iAtten=1,nAtten(iProb,jType)
+          do iFtype=1,nFtype(iFlt)
+            do iParam=1,nParamVar(iFlt,iFltWidth)
+              do j=1,nInten(iProb)
+                if ( kMem .eq. 1 ) then
+                  tempHaz(iParam,j,iProb,iAtten,iFtype) = rate(iParam,iFltWidth)
+     1               * Pclu(j,iProb,iAtten,iParam,iFtype,iFltWidth) * probAct1
+                else
+                  tempHaz(iParam,j,iProb,iAtten,iFtype) = 0.0d0
+                endif
+              enddo
+            enddo
+          enddo
+        enddo
+      enddo
+
+      return
       end

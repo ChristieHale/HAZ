@@ -21,10 +21,14 @@ hazard and its disaggregation independently of the HAZ Fortran.
 
 Each case also has a **Cluster** run: the same faults as the segments of one
 fault system, as source type 8, with the sequence rate as each member's
-activity rate. Since Phase 1, HAZ reads these runs and stops before the hazard
-calculation, so the test runner skips them (`pending_cases` in
-`scripts/run_tests.py`). Phase 2 adds their reference outputs, which are
-compared against the reference values from the Members runs.
+activity rate. `scripts/test_cluster_hazard.py` runs HAZ on both and compares
+the Cluster run with the reference values from the Members run. The Cluster
+runs' outputs are also regression references for `scripts/run_tests.py`.
+
+In the Cluster runs' out1, the first member's block holds the cluster's branch
+curves, `alpha * ProbAct * P_c`, and the other members' blocks hold zeros
+(convention F1 in the spec). In out3, each member's line holds its allocated
+share, and the shares add up to the cluster hazard.
 
 All of the input files are written by `make_inputs.py`; edit it, not the inputs:
 
@@ -97,7 +101,21 @@ python -m pytest test_cluster_reference.py
 
 # Reading of source type 8: runs HAZ on the Cluster inputs and on one variant per rule
 HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_reader.py
+
+# Mean hazard: runs HAZ on the Members and Cluster inputs and compares them
+HAZ_BIN=/path/to/HAZ python -m pytest test_cluster_hazard.py
 ```
+
+`test_cluster_hazard.py` checks:
+- **Test A:** the cluster curve against `alpha * (1 - prod_k (1 - P_k))`, with
+  the lognormal medians implied by the Members run.
+- **Tests A and B:** the cluster curve on each GMM branch against the
+  reference tool, applied to the Members run's out1; the GMM-weighted out3
+  total; and the members' out3 shares adding up to it.
+- **Limits:** the cluster tends to `alpha` at the lowest level and to the
+  independent sum at the highest level with hazard.
+- **One member:** a cluster of one member gives out2 to out7 identical to an
+  ordinary type 1 source with the same rate.
 
 **Disaggregation with one GMM.** If a case has a single GMM, the allocation
 factor `s(z)` is one number per level. The cluster's disaggregation fractions

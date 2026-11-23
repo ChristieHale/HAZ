@@ -1,0 +1,18 @@
+ 45.3 Haz45.3 Out2 file - magnitude recurrence curves for SSC fractile code
+              3   nFlt, nWidth
+    1    1    1
+  1.000000
+    1  TA_NMS_BA-BL                                                                    
+    1    1  nMag, nParamVar
+  1.000000
+   1   1   7.900  0.2657E-02
+  1.000000
+    2  TA_RFT_S                                                                        
+    1    1  nMag, nParamVar
+  1.000000
+   2   1   7.800  0.2657E-02
+  1.000000
+    3  TA_NMN_S                                                                        
+    1    1  nMag, nParamVar
+  1.000000
+   3   1   7.600  0.2657E-02
