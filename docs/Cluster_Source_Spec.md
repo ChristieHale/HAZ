@@ -520,7 +520,7 @@ Agreed on November 22, 2026 (5 on November 23):
   - Source types 6 and 7 are read as in HAZ (A7), and source type 8 is read as type 1. HAZ writes out1 as F1, so the cluster is sampled as one source.
   - Three problems found on the way are fixed: the last period's test ground motions were used for every period; out1 blocks were read with the selected period's numbers of GMMs and levels; and a fractile curve that did not cross a hazard level gave a UHS of zero (now a negative value that says where the curve ran out).
   - New tests: `Cluster_Test` (test B, two GMMs at 0.5 / 0.5) checks the two-point distribution of the fractiles, the mean against the average of the two curves, and the 5th and 95th UHS values. `Source_Types_Test` (types 1, 6 and 7) checks that every fractile equals HAZ's total when there is a single branch. `scripts/test_reference.py` runs all four tests and, with `HAZ_BIN`, reruns their hazard cases.
-- **Phase 5, HAZ (done; Fractiles to follow):**
+- **Phase 5, HAZ (done):**
   - Reader (A3.2, A8): the single-branch and single-model rules are lifted. Every member of a cluster must have the same numbers and weights of thickness-and-dip, rate-and-magnitude and mechanism branches, and the same rates; magnitudes may differ, so a branch can hold a joint rupture set. Every segmentation model must include a member, and every member must be in a model.
   - Combination for each segmentation model and the pass 2 factor as in A8 (`S36_ClusterCombine`); out1 as F3 (`S36_ClusterWriteOut1`).
   - Pass 1 no longer clears the out1 and out5 work arrays, and pass 2 adds nothing to out1's; clearing them (at HAZ's maximum dimensions, about 200 MB) took about 90% of a small run, so a cluster now costs about the same time as its members run alone.
@@ -528,4 +528,8 @@ Agreed on November 22, 2026 (5 on November 23):
   - Size of the approximation in test C: up to about 15% above the exact rate at intermediate ground motions (for example 1.15 at 0.07 g, 1.0 s, Memphis), and equal at low and high ground motions. Treating the members as independent gives up to 3 times the exact rate at low ground motions.
   - Storage at the full NMFS counts (6 members, 18 levels, 16 periods, 17 GMMs, 120 rate × magnitude branches, 3 thicknesses, 8 models) is about 280 MB; with 7 periods, about 120 MB.
   - The single-model clusters of tests A and B give the same out2 to out7 as before; only their out1 changes (F3). Regression otherwise byte-identical.
+- **Phase 5, Fractiles (done)**, in ChristieHale/Fractiles, branch `compatibility_issues` (a1d8052):
+  - The reader records the members of clusters, and `Set_Cluster_Sources` numbers each cluster's segmentation models as extra sources after the last source (as in F3), with the first member's branches and weights, and sets the order of the sources in out1.
+  - A cluster is sampled as one source: a segmentation model, then one width, rate-and-magnitude and mechanism branch, and that model's curve. out1 from HAZ before F3 stops with a message.
+  - `Cluster_Test` (test B) is regenerated with F3. The new `Cluster_Geometries_Test` (test C) checks every fractile against the exact quantiles of the 384 branch curves (within 4 standard errors) and the mean against the exact mean.
 
