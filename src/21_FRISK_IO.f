@@ -370,15 +370,17 @@ c  --------------------------
 
 c  -------------------------------------------------------------------
       subroutine S21_WriteTempHaz ( PCflag, tempHaz, tempPC_D, nPC, nParamVar, nInten,
-     1                nProb, nAtten, iFlt, jtype, nfType, iFltWidth, nWidth )
+     1                nProb, nAtten, iFlt, jtype, nfType, iFltWidth, nWidth,
+     2                nParamMax, nIntenMax, nAttenMax )
 
       implicit none
       include 'pfrisk.h'
 
       integer nProb, jType, iProb, iFtype, j, nParamVar(MAX_FLT,MAX_WIDTH),
      1        nInten(MAX_PROB), nAtten(MAX_PROB,4), iflt, nfType(MAX_FLT),
-     2        iFltWidth, nWidth(MAX_FLT), iAtten, iParam, nPC, iPC, PCflag(MAX_PROB)
-      real*8 tempHaz(MAXPARAM,MAX_INTEN,MAX_PROB,MAX_ATTEN,MAX_FTYPE),
+     2        iFltWidth, nWidth(MAX_FLT), iAtten, iParam, nPC, iPC, PCflag(MAX_PROB),
+     3        nParamMax, nIntenMax, nAttenMax
+      real*8 tempHaz(nParamMax,nIntenMax,nProb,nAttenMax,MAX_FTYPE),
      1       tempPC_D(7,MAXPARAM,MAX_INTEN,MAX_PROB,MAX_FTYPE)
 
       do iProb=1,nProb
@@ -480,9 +482,15 @@ c  -------------------------------------------------------------------
      1     epsBins(MAX_EPS)
       real*8 m_bar(MAX_PROB,MAX_INTEN), d_bar(MAX_PROB,MAX_INTEN),
      3     e_bar(MAX_PROB,MAX_INTEN)
-      real riskBins(MAX_MAG,MAX_DIST,MAX_EPS,MAX_PROB,MAX_INTEN),
-     5     outrisk(MAX_MAG,MAX_DIST,MAX_PROB,MAX_INTEN),
-     9     sumbar, xx
+C *** PRECISION EDIT: HazBins (deaggregation bins) accumulated in real*8.
+C     In single precision, millions of small additions per bin lost up to ~13%.
+cPR   real riskBins(MAX_MAG,MAX_DIST,MAX_EPS,MAX_PROB,MAX_INTEN),
+cPR  5     outrisk(MAX_MAG,MAX_DIST,MAX_PROB,MAX_INTEN),
+cPR  9     sumbar, xx
+      real*8 riskBins(MAX_MAG,MAX_DIST,MAX_EPS,MAX_PROB,MAX_INTEN),
+     5     outrisk(MAX_MAG,MAX_DIST,MAX_PROB,MAX_INTEN), sumbar
+      real xx
+C *** END PRECISION EDIT
       real mMagout(MAX_FLT,MAX_WIDTH,MAXPARAM)
       real MinRrup(MAX_FLT), mMagoutWt(MAX_FLT,MAX_WIDTH,MAXPARAM)
       real*8 risk2(MAX_INTEN), sum, risk2t(MAX_INTEN)
@@ -655,11 +663,19 @@ c  ------------------------------------------------------------------
       integer nProb, i, isite, nInten(MAX_PROB), nMagBins, nDistBins,
      1        nEpsBins, nXcostBins, J2, iEpsBin, iDistBin, iMagBin,
      2        iXcostBin, iInten, iMagbins, iDistbins, iProb, nwr
+C *** PRECISION EDIT: HazBins (deaggregation bins) accumulated in real*8.
+C     In single precision, millions of small additions per bin lost up to ~13%.
+cPR   real siteX, siteY, testInten(MAX_PROB,MAX_INTEN), distBins(MAX_DIST),
+cPR  1     riskBins(MAX_MAG,MAX_DIST,MAX_EPS,MAX_PROB,MAX_INTEN),
+cPR  2     epsBins(MAX_EPS), XcostBins(MAX_Xcost), magBins(MAX_MAG),
+cPR  3     outrisk(MAX_MAG,MAX_DIST,MAX_PROB,MAX_INTEN),
+cPR  4     RiskBinsX(MAX_Xcost,MAX_PROB,MAX_INTEN)
       real siteX, siteY, testInten(MAX_PROB,MAX_INTEN), distBins(MAX_DIST),
-     1     riskBins(MAX_MAG,MAX_DIST,MAX_EPS,MAX_PROB,MAX_INTEN),
      2     epsBins(MAX_EPS), XcostBins(MAX_Xcost), magBins(MAX_MAG),
-     3     outrisk(MAX_MAG,MAX_DIST,MAX_PROB,MAX_INTEN),
      4     RiskBinsX(MAX_Xcost,MAX_PROB,MAX_INTEN)
+      real*8 riskBins(MAX_MAG,MAX_DIST,MAX_EPS,MAX_PROB,MAX_INTEN),
+     3     outrisk(MAX_MAG,MAX_DIST,MAX_PROB,MAX_INTEN)
+C *** END PRECISION EDIT
       real*8 sumX, sum, m_bar(MAX_PROB,MAX_INTEN), d_bar(MAX_PROB,MAX_INTEN),
      1     e_bar(MAX_PROB,MAX_INTEN), Xcost_bar(MAX_PROB,MAX_INTEN)
       character*80 file1

@@ -2442,7 +2442,82 @@ C     Model Numbers = 675-676
          maxaper = 10.0
       endif
 
+C ======================================================================
+C     jcalc values that S11_meanInten accepts but S12_attenper did not list,
+C     so deterministic runs (15_determ.f) stopped with "invalid jcalc".
+C     Spectral-period metadata (anper, minaper, maxaper) are copied from the
+C     base model. Added October 2026.
+C ======================================================================
 
+C *** Part A - existing S11 codes missing from S12 **********************
+
+C *** NGA-West2 + Al Atik & Youngs (2014) epistemic median adjustment ***
+C     Low branch = 5xxx, High branch = 7xxx (same periods as base model)
+C     ASK14 (base 2787-2794)
+      if ( (jcalc .ge. 5787 .and. jcalc .le. 5794) .or.
+     1     (jcalc .ge. 7787 .and. jcalc .le. 7794) ) then
+         anper = 24
+         minaper = 0.01
+         maxaper = 10.0
+      endif
+C     CY14 (base 2797-2802)
+      if ( (jcalc .ge. 5797 .and. jcalc .le. 5802) .or.
+     1     (jcalc .ge. 7797 .and. jcalc .le. 7802) ) then
+         anper = 25
+         minaper = 0.01
+         maxaper = 10.0
+      endif
+C     CB14 (base 2836-2839)
+      if ( (jcalc .ge. 5836 .and. jcalc .le. 5839) .or.
+     1     (jcalc .ge. 7836 .and. jcalc .le. 7839) ) then
+         anper = 23
+         minaper = 0.01
+         maxaper = 10.0
+      endif
+C     I14 (base 2910)
+      if ( jcalc .eq. 5910 .or. jcalc .eq. 7910 ) then
+         anper = 23
+         minaper = 0.01
+         maxaper = 10.0
+      endif
+C     BSSA14 (base 2922-2927)
+      if ( (jcalc .ge. 5922 .and. jcalc .le. 5927) .or.
+     1     (jcalc .ge. 7922 .and. jcalc .le. 7927) ) then
+         anper = 107
+         minaper = 0.01
+         maxaper = 10.0
+      endif
+
+C *** NGA-West2 Zone 1/2/3 magnitude-scaling uncertainty (8xxx) *********
+      if ( jcalc .ge. 8787 .and. jcalc .le. 8789 ) then
+         anper = 24
+         minaper = 0.01
+         maxaper = 10.0
+      endif
+      if ( jcalc .ge. 8797 .and. jcalc .le. 8799 ) then
+         anper = 25
+         minaper = 0.01
+         maxaper = 10.0
+      endif
+      if ( jcalc .ge. 8836 .and. jcalc .le. 8838 ) then
+         anper = 23
+         minaper = 0.01
+         maxaper = 10.0
+      endif
+      if ( jcalc .ge. 8922 .and. jcalc .le. 8924 ) then
+         anper = 107
+         minaper = 0.01
+         maxaper = 10.0
+      endif
+
+C *** PSHAB20 Cascadia, Z2.5=Z2.5ref, fixed z_hyp (6230) *****************
+      if ( jcalc .eq. 6230 ) then
+         anper = 26
+         minaper = 0.01
+         maxaper = 10.0
+      endif
+
+C ======================================================================
 
 
 c ******* Somerville et al. (2009), Australia *******

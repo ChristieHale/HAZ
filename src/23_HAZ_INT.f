@@ -70,7 +70,11 @@ c --------------------------------------------------------------
       implicit none
       include 'pfrisk.h'
 
-      real HazBins( MAX_MAG, MAX_DIST, MAX_EPS,MAX_PROB, MAX_INTEN )
+C *** PRECISION EDIT: HazBins (deaggregation bins) accumulated in real*8.
+C     In single precision, millions of small additions per bin lost up to ~13%.
+cPR   real HazBins( MAX_MAG, MAX_DIST, MAX_EPS,MAX_PROB, MAX_INTEN )
+      real*8 HazBins( MAX_MAG, MAX_DIST, MAX_EPS,MAX_PROB, MAX_INTEN )
+C *** END PRECISION EDIT
       integer i1, i2, i2b, i3, i4
 
       do 90 i1 = 1, MAX_MAG
@@ -197,25 +201,29 @@ c     Now check for value greater than highest bin value.
 
 c -------------------------------------------------------------
 
-      subroutine S23_Init_tempHaz ( tempHaz )
+      subroutine S23_Init_tempHaz ( tempHaz, n1, n2, n3, n4, n5 )
 
       implicit none
-      include 'pfrisk.h'
+      
 
-      real*8 tempHaz(MAXPARAM,MAX_INTEN, MAX_PROB, MAX_ATTEN,MAX_FTYPE)
+      integer n1, n2, n3, n4, n5
+      real*8 tempHaz(n1,n2,n3,n4,n5)
       integer iParam, iInten, iProb, iAtten, iFtype
 
-      do iParam=1,MAXPARAM
-          do iInten=1,MAX_INTEN
-            do iProb=1,MAX_PROB
-              do iAtten=1,MAX_ATTEN
-                do iFtype=1,MAX_FTYPE
-                  tempHaz(iParam,iInten,iProb,iAtten,iFtype) = 0.0
-                enddo
+C *** SPEEDUP EDIT (Stage 1): loop order changed so the first (fastest-varying)
+C     array index is innermost; values set are identical.
+      do iFtype=1,n5
+        do iAtten=1,n4
+          do iProb=1,n3
+            do iInten=1,n2
+              do iParam=1,n1
+                tempHaz(iParam,iInten,iProb,iAtten,iFtype) = 0.0
               enddo
             enddo
           enddo
+        enddo
       enddo
+C *** END SPEEDUP EDIT
       return
       end
 
@@ -229,15 +237,17 @@ c -------------------------------------------------------------
       real*8 tempHaz1(MAXPARAM,MAX_INTEN, MAX_PROB,MAX_FTYPE)
       integer iParam, iInten, iProb, iFtype
 
-      do iParam=1,MAXPARAM
+C *** SPEEDUP EDIT (Stage 1): first array index innermost; values identical.
+      do iFtype=1,MAX_FTYPE
+        do iProb=1,MAX_PROB
           do iInten=1,MAX_INTEN
-            do iProb=1,MAX_PROB
-                do iFtype=1,MAX_FTYPE
-                  tempHaz1(iParam,iInten,iProb,iFtype) = 0.0
-                enddo
+            do iParam=1,MAXPARAM
+              tempHaz1(iParam,iInten,iProb,iFtype) = 0.0
             enddo
           enddo
+        enddo
       enddo
+C *** END SPEEDUP EDIT
       return
       end
 

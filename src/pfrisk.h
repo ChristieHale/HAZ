@@ -10,7 +10,7 @@ c     Set array dimensions
      2        MAX_SEGMOD, MAX_COOR
 
 
-      parameter (MAX_FLT=150, MAX_SEG=100, MAX_INTEN=18, MAX_PROB=16,
+      parameter (MAX_FLT=280, MAX_SEG=280, MAX_INTEN=18, MAX_PROB=16,
      1           MAX_EPS=10, MAX_Xcost=10, MAXPARAM=300, MAX_MAG=30,
      2           MAX_DIST=25, MAX_N1=220, MAX_WIDTH=15, MAX_DIST1=10000,
      3           MAX_GRID=32000, MAX_SYN=5, MAX_AMPMAG=25, MAX_AMPPER=15,

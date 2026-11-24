@@ -1,11 +1,12 @@
 # Adapted from: https://cmake.org/Wiki/CMakeForFortranExample
 # CMake project file for HAZ
 
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required (VERSION 3.10)
 project (HAZ)
 enable_language (Fortran)
 
 option(STATIC "Enable static linking for binary distribution")
+option(BOUNDS_CHECK "Enable run-time array bounds checking and tracebacks (slow; for testing)" OFF)
 
 # make sure that the default is a RELEASE
 if (NOT CMAKE_BUILD_TYPE)
@@ -35,11 +36,20 @@ if (Fortran_COMPILER_NAME MATCHES "gfortran.*")
   endif (STATIC)
   # Optimization flags
   set (CMAKE_Fortran_FLAGS_RELEASE "-funroll-all-loops -fno-f2c -O3") # -ffpe-trap=invalid,zero,overflow,underflow,denormal -ffpe-summary=none")
-  set (CMAKE_Fortran_FLAGS_DEBUG   "-fno-f2c -O0 -g")
+  set (CMAKE_Fortran_FLAGS_DEBUG   "-fno-f2c -O0 -g -fbacktrace")
+  # Run-time bounds checking (works with any build type; use with Debug for accurate line numbers)
+  if (BOUNDS_CHECK)
+      message("--> Bounds checking enabled.")
+      set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fcheck=bounds -fbacktrace -g")
+  endif (BOUNDS_CHECK)
 elseif (Fortran_COMPILER_NAME MATCHES "ifort.*")
   # ifort (untested)
   set (CMAKE_Fortran_FLAGS_RELEASE "-f77rtl -O3")
-  set (CMAKE_Fortran_FLAGS_DEBUG   "-f77rtl -O0 -g")
+  set (CMAKE_Fortran_FLAGS_DEBUG   "-f77rtl -O0 -g -traceback")
+  if (BOUNDS_CHECK)
+      message("--> Bounds checking enabled.")
+      set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -check bounds -traceback -g")
+  endif (BOUNDS_CHECK)
 endif (Fortran_COMPILER_NAME MATCHES "gfortran.*")
 
 message ("--> Fortran compiler: " ${Fortran_COMPILER_NAME})

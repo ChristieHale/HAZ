@@ -96,19 +96,43 @@ c ------------------------------------------------------------------
       real eti, ti(MAX_PROB,MAX_INTEN), siga, sigTrunc, w
       real*8 g, g1
 
+C *** SPEEDUP EDIT (Stage 1): the truncation term NDTR3(sigTrunc) is constant
+C     for a given sigTrunc, so it is computed once and saved; NDTR3(w) is only
+C     evaluated when it is used. Results are identical to the original.
+      real sigTruncSave
+      real*8 g1Save
+      save sigTruncSave, g1Save
+      data sigTruncSave / -999.0 /
+cSP   (original lines kept below as comments)
+cSP   w = (ti(jj,i)-eti)/siga
+cSP   call S27_NDTR3(w,g)
+cSP   if (w .gt. sigTrunc) then
+cSP     pxceed3 = 0.0
+cSP   else if (w .lt. (sigTrunc*(-1.))) then
+cSP     pxceed3 = 1.0
+cSP   else
+cSP     call S27_NDTR3(sigTrunc,g1)
+cSP     pxceed3 = (g-g1)/(1.-(2.*g1))
+cSP   endif
+
 c     truncates and renormalizes on both low and high end
 
       w = (ti(jj,i)-eti)/siga
-      call S27_NDTR3(w,g)
 
       if (w .gt. sigTrunc) then
         pxceed3 = 0.0
       else if (w .lt. (sigTrunc*(-1.))) then
         pxceed3 = 1.0
       else
-        call S27_NDTR3(sigTrunc,g1)
+        call S27_NDTR3(w,g)
+        if ( sigTrunc .ne. sigTruncSave ) then
+          call S27_NDTR3(sigTrunc,g1Save)
+          sigTruncSave = sigTrunc
+        endif
+        g1 = g1Save
         pxceed3 = (g-g1)/(1.-(2.*g1))
       endif
+C *** END SPEEDUP EDIT
 
       return
       end

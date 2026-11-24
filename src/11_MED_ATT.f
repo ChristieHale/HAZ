@@ -7139,43 +7139,48 @@ C        set dummy value for median (this is used only for sigma)
          stop 99
        endif
 
-C     SWUS PHISS Sigma: PhiSS_Global_R50 - Low
+C********************************************************************
+C     Corrected (September 2026) to call the PVNGS total sigma models
+C     SWUS Total Sigma: PVNGS CA sources - No Path - Central
 C     Model Number = 13010
       if ( jcalc .eq. 13010 ) then
-         attenname = 'SWUS phiSS_Global_R50 Low'
+         attenname = 'SWUS Total Sigma PVNGS-CAnoPath Central'
          iBranch = 1
-         call S32_SWUS_PHISS_Global_R50 ( phiSS, iflag, iBranch )
+             call S32_SWUS_Sigma_PVNGS_CAnoPath_Cen (mag,specT,sigma,iflag)
+C         call S32_SWUS_PHISS_Global_R50 ( phiSS, iflag, iBranch )
 
 C        set dummy value for median (this is used only for sigma)
          lnY = 1.0e10
-         write (*,'( 2x,''phiSS only, need to add tau'')')
-         stop 99
+C         write (*,'( 2x,''phiSS only, need to add tau'')')
+C         stop 99
        endif
 
-C     SWUS PHISS Sigma: PhiSS_Global_R50 - central
+C     WUS Total Sigma: PVNGS CA sources - No Path - Low
 C     Model Number = 13011
       if ( jcalc .eq. 13011 ) then
-         attenname = 'SWUS phiSS_Global_R50 Central'
+         attenname = 'SWUS Total Sigma PVNGS-CAnoPath Low'
          iBranch = 2
-         call S32_SWUS_PHISS_Global_R50 ( phiSS, iflag, iBranch )
+C         call S32_SWUS_PHISS_Global_R50 ( phiSS, iflag, iBranch )
+             call S32_SWUS_Sigma_PVNGS_CAnoPath_Low (mag,specT,sigma,iflag)
 
 C        set dummy value for median (this is used only for sigma)
          lnY = 1.0e10
-         write (*,'( 2x,''phiSS only, need to add tau'')')
-         stop 99
+C         write (*,'( 2x,''phiSS only, need to add tau'')')
+C         stop 99
        endif
 
-C     SWUS PHISS Sigma: PhiSS_Global_R50 - high
+C     WUS Total Sigma: PVNGS CA sources - No Path - High
 C     Model Number = 13012
       if ( jcalc .eq. 13012 ) then
-         attenname = 'SWUS phiSS_Global_R50 HIgh'
+         attenname = 'SWUS Total Sigma PVNGS-CAnoPath High'
          iBranch = 3
-         call S32_SWUS_PHISS_Global_R50 ( phiSS, iflag, iBranch )
+             call S32_SWUS_Sigma_PVNGS_CAnoPath_High ( mag, specT, sigma, iflag )
+C         call S32_SWUS_PHISS_Global_R50 ( phiSS, iflag, iBranch )
 
 C        set dummy value for median (this is used only for sigma)
          lnY = 1.0e10
-         write (*,'( 2x,''phiSS only, need to add tau'')')
-         stop 99
+C         write (*,'( 2x,''phiSS only, need to add tau'')')
+C         stop 99
        endif
 
 
@@ -8172,6 +8177,63 @@ C     Set Z25 = Z25Ref based on Vs
      1           sigma, phi, tau, specT, period2, iflag, depth,
      2           disthypo, iRegion, mbInter, mbSlab, pnwbflag )
          attenname = 'Parker et al. (2020), Cascadia, with Z25=Z25Ref'
+      endif
+
+C     Cascadia Model, with Z25=Z25Ref
+C     Model Number = 6230
+      if ( jcalc .eq. 6230 ) then
+C     Set mb values for interface and slab cases
+         mbinter = 7.7
+         mbslab = 7.2
+         iRegion = 3
+         pnwbflag = 4
+C     Set Z25 = Z25Ref based on Vs
+         x = (alog10(vs) - alog10(500.0) ) / (0.42*sqrt(2.0))
+         z25P = 10**(3.75-0.74*(1+erf(x)))
+         z25P = z25P/1000.0
+         depth = depthTop + 0.48*6.5        !zhyp
+         call S35_PSHAB2019 ( mag, fType, rupDist, vs, Z25P, lnY,
+     1           sigma, phi, tau, specT, period2, iflag, depth,
+     2           disthypo, iRegion, mbInter, mbSlab, pnwbflag )
+         attenname = 'Parker et al. (2020), Cascadia, with Z25=Z25Ref, Zhyp_mod = Ztor + 0.48*6.5 (USGS)'
+      endif
+
+C     Cascadia Model, with Z25=Z25Ref
+C     Model Number = 6231
+      if ( jcalc .eq. 6231 ) then
+C     Set mb values for interface and slab cases
+         mbinter = 7.7
+         mbslab = 7.2
+         iRegion = 3
+         pnwbflag = 4
+C     Set Z25 = Z25Ref based on Vs
+         x = (alog10(vs) - alog10(500.0) ) / (0.42*sqrt(2.0))
+         z25P = 10**(3.75-0.74*(1+erf(x)))
+         z25P = z25P/1000.0
+         depth = depth*1.13        !zhyp 
+         call S35_PSHAB2019 ( mag, fType, rupDist, vs, Z25P, lnY,
+     1           sigma, phi, tau, specT, period2, iflag, depth,
+     2           disthypo, iRegion, mbInter, mbSlab, pnwbflag )
+         attenname = 'Parker et al. (2020), Cascadia, with Z25=Z25Ref, Zhyp_mod = Ztor*1.13 (Idriss)'
+      endif
+
+C     Cascadia Model, with Z25=Z25Ref
+C     Model Number = 6232
+      if ( jcalc .eq. 6232 ) then
+C     Set mb values for interface and slab cases
+         mbinter = 7.7
+         mbslab = 7.2
+         iRegion = 3
+         pnwbflag = 4
+C     Set Z25 = Z25Ref based on Vs
+         x = (alog10(vs) - alog10(500.0) ) / (0.42*sqrt(2.0))
+         z25P = 10**(3.75-0.74*(1+erf(x)))
+         z25P = z25P/1000.0
+         depth = depth + 8.        !zhyp 
+         call S35_PSHAB2019 ( mag, fType, rupDist, vs, Z25P, lnY,
+     1           sigma, phi, tau, specT, period2, iflag, depth,
+     2           disthypo, iRegion, mbInter, mbSlab, pnwbflag )
+         attenname = 'Parker et al. (2020), Cascadia, with Z25=Z25Ref, Zhyp_mod = Ztor + 8 (Ivan)'
       endif
 
 C     Cascadia Model, with Z25 Basin model
