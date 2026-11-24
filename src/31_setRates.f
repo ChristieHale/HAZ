@@ -215,6 +215,20 @@ c            Use a fixed mag step of 0.01 for getting the moment balance
 
              rate(iParam,i) = momentRate2/sum
 
+c          BOXCAR MODEL (magRecur = 8): uniform pdf of width deltaM1 from
+c          mU-deltaM1 to mU (mU = reference magnitude + deltaM1/2). The mean
+c          moment of one earthquake is
+c             10**16.05 (10**(1.5 mU) - 10**(1.5 (mU-deltaM1))) / (1.5 ln(10) deltaM1)
+          elseif (magRecur(iFlt,iParam,i) .eq. 8.) then
+             if ( deltaM1 .le. 0. ) then
+                sum = 10.d0**(1.5d0*dble(mU)+16.05d0)
+             else
+                sum = 10.d0**16.05d0
+     1              * ( 10.d0**(1.5d0*dble(mU)) - 10.d0**(1.5d0*dble(mU-deltaM1)) )
+     2              / ( 1.5d0*log(10.d0)*dble(deltaM1) )
+             endif
+             rate(iParam,i) = momentRate2/sum
+
 c     WAACY Model
           elseif (magRecur(iFlt,iParam,i) .eq. 10 ) then
              call S31_calc_sum_waacy ( sum, mpdf_param, maxMag, beta, minMag, iFlt, iParam, iwidth,
@@ -352,8 +366,8 @@ c        Is this a recurrence INterval?
          if (RateType(iFlt,iParam,i) .eq. 3) then
 c           write (*,'( i5)') magRecur(iFlt,iParam,i)
 
-c          max mag model
-           if (magRecur(iFlt,iParam,i) .eq. 3) then
+c          max mag model and boxcar model (every earthquake is in the pdf)
+           if (magRecur(iFlt,iParam,i) .eq. 3 .or. magRecur(iFlt,iParam,i) .eq. 8) then
               rate(iParam,i) =1./RateParam(iFlt,iParam,i)
 
 c          Y&C model
